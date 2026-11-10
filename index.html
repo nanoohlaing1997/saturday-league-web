@@ -143,23 +143,25 @@
   :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
   /* ---- up next ---- */
+  /* Quiet by design: a live match is the loud one, this is only what's coming. */
   .next {
     width: 100%;
     text-align: left;
-    background: var(--ink);
-    color: var(--paper);
-    border: 0;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line);
     border-radius: var(--r);
     padding: 16px 18px 18px;
     display: block;
     box-shadow: var(--shadow);
   }
+  .next:active { background: var(--sunk); }
   .next .label {
     font-family: var(--display);
     font-size: 13px;
     letter-spacing: .16em;
     text-transform: uppercase;
-    opacity: .62;
+    color: var(--ink-soft);
   }
   .next .vs {
     display: flex;
@@ -172,11 +174,12 @@
     line-height: 1.05;
     text-transform: uppercase;
   }
-  .next .vs small { font-size: 18px; opacity: .55; font-weight: 500; }
+  .next .vs { color: var(--ink); }
+  .next .vs small { font-size: 18px; color: var(--ink-soft); font-weight: 500; }
   .next .meta {
     margin-top: 8px;
     font-size: 13px;
-    opacity: .66;
+    color: var(--ink-soft);
     font-variant-numeric: tabular-nums;
   }
   .swatch {

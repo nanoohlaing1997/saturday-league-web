@@ -1,6 +1,6 @@
 {
   "name": "Saturday League",
-  "short_name": "Saturday",
+  "short_name": "Saturday League",
   "description": "Fixtures, 7-minute match clock and live table for a four-team Saturday league.",
   "start_url": "./index.html",
   "scope": "./",

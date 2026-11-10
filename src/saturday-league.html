@@ -798,8 +798,9 @@
     <section class="panel" id="panel-fixtures">
       <div class="empty" id="noLeague" hidden>
         <h2>No matches yet</h2>
-        <p>Set the session length, name the teams, then create the match list. It takes a few seconds.</p>
-        <button class="btn solid" id="goSetup">Go to Setup</button>
+        <p>Create the match list, or join the one a teammate already made using their league code.</p>
+        <button class="btn solid" id="goSetup">Create a match list</button>
+        <button class="btn" id="goJoin">Join with a code</button>
       </div>
       <div id="upnext"></div>
       <div id="rounds"></div>
@@ -829,7 +830,8 @@
       <div class="card guide">
         <ol>
           <li><b>Set it up.</b> In Setup choose the session length, name the four teams and pick their colours, set the minutes per match, then tap <b>Create the match list</b>.</li>
-          <li><b>Share the code.</b> Tap <b>Copy code to share</b> and paste it into the group chat. Everyone opens the same link, goes to Setup, types the code and taps <b>Join</b>.</li>
+          <li><b>Share the code.</b> Tap <b>Share the code</b> in Setup — it sends the code and the link straight to your group chat.</li>
+          <li><b>Everyone else joins.</b> Open the link, tap <b>Join with a code</b>, type the code, tap <b>Join</b>. The fixtures and the live clock appear — nobody else creates anything.</li>
           <li><b>Play.</b> Open a match from Fixtures, tap <b>Start</b>, and tap <b>+</b> as the goals go in.</li>
         </ol>
       </div>
@@ -884,7 +886,7 @@
             <button class="pill" id="codeNew" style="width:auto;padding:0 12px" aria-label="Suggest a code">New</button>
             <button class="pill" id="codeJoin" style="width:auto;padding:0 14px" aria-label="Join">Join</button>
           </div>
-          <button class="btn" id="codeShare" style="width:100%;margin-top:10px">Copy code to share</button>
+          <button class="btn" id="codeShare" style="width:100%;margin-top:10px">Share the code</button>
           <div class="status-line"><i class="live-dot" id="statusDot"></i><span id="statusText">Off</span></div>
         </div>
       </div>
@@ -2016,7 +2018,7 @@
       return;
     }
 
-    setStatus("off", "Connecting…");
+    setStatus("off", leagueExists() ? "Connecting…" : ("Looking for league " + sync.code + "…"));
     sync.me = deviceId();
 
     var V = "https://www.gstatic.com/firebasejs/10.12.2/";
@@ -2055,7 +2057,12 @@
   function onRemoteDoc(snap) {
     if (sync.deleted) return;
     var doc = snap.val();
-    if (!doc) { sync.lastDoc = ""; pushDoc(); return; }   // first phone seeds the league
+    if (!doc) {
+      // nobody has created this league yet
+      if (leagueExists()) { sync.lastDoc = ""; pushDoc(); }
+      else setStatus("on", "Joined " + sync.code + " — nobody has created a match list yet");
+      return;
+    }
 
     var json = JSON.stringify({ teams: doc.teams, matches: doc.matches,
                                 minutes: doc.minutes, format: doc.format });
@@ -2143,6 +2150,13 @@
 
   document.getElementById("goSetup").addEventListener("click", function () { showTab("setup"); });
 
+  document.getElementById("goJoin").addEventListener("click", function () {
+    showTab("setup");
+    var field = document.getElementById("codeInput");
+    field.value = "";
+    try { field.focus(); } catch (e) { /* ignore */ }
+  });
+
   document.getElementById("codeNew").addEventListener("click", function () {
     document.getElementById("codeInput").value = suggestCode();
   });
@@ -2183,8 +2197,56 @@
 
   document.getElementById("codeJoin").addEventListener("click", function () {
     var code = document.getElementById("codeInput").value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
+    if (code.length < 4) {
+      window.alert("A league code needs at least four characters.");
+      return;
+    }
     localSet("league.code", code);
-    window.location.reload();
+    window.location.reload();   // reconnect cleanly to the new league
+  });
+
+  /* Sharing the code: the share sheet is what people actually want, since it
+     goes straight into the group chat. Clipboard next, and if the browser
+     allows neither, highlight the code so it can be copied by hand. */
+  function copyText(text, button) {
+    var original = button.textContent;
+    function say(message) {
+      button.textContent = message;
+      window.setTimeout(function () { button.textContent = original; }, 2600);
+    }
+
+    var blurb = "Join my Saturday League with code " + text + " - " + window.location.href;
+
+    if (navigator.share) {
+      navigator.share({ title: "Saturday League", text: blurb })
+        .then(function () { say("Shared"); })
+        .catch(function () { /* cancelled, or not allowed - fall quiet */ });
+      return;
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(blurb).then(
+        function () { say("Copied - paste it to the group"); },
+        function () { selectCode(); say("Select the code above and copy"); });
+      return;
+    }
+
+    selectCode();
+    say("Select the code above and copy");
+  }
+
+  function selectCode() {
+    var field = document.getElementById("codeInput");
+    try {
+      field.focus();
+      field.setSelectionRange(0, field.value.length);
+    } catch (e) { /* ignore */ }
+  }
+
+  document.getElementById("codeShare").addEventListener("click", function () {
+    var code = document.getElementById("codeInput").value.trim().toUpperCase();
+    if (!code) { window.alert("Enter a league code first."); return; }
+    copyText(code, this);
   });
 
   function suggestCode() {
@@ -2209,10 +2271,7 @@
   }
 
   renderAll();
-  if (leagueExists()) {
-    startSyncSoon();
-  } else {
-    showTab("setup");          // step one: build the match list
-  }
+  if (localGet("league.code", "")) startSyncSoon();   // joining, or rejoining
+  if (!leagueExists()) showTab("setup");              // step one: create or join
 })();
 </script>

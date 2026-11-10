@@ -690,6 +690,9 @@
   }
   .guide ol li::marker { font-family: var(--display); font-weight: 700; color: var(--ink); }
 
+  .share-row { display: flex; gap: 8px; margin-top: 10px; }
+  .share-row .btn { flex: 1; font-size: 16px; padding: 12px 8px; }
+
   .code-row { display: flex; gap: 8px; align-items: center; }
   .code-row input {
     flex: 1;
@@ -845,7 +848,7 @@
       <div class="card guide">
         <ol>
           <li><b>Set it up.</b> In Setup choose the session length, name the four teams and pick their colours, set the minutes per match, then tap <b>Create the match list</b>.</li>
-          <li><b>Share the code.</b> Tap <b>Share the code</b> in Setup — it sends the code and the link straight to your group chat.</li>
+          <li><b>Share the code.</b> In Setup, <b>Copy code</b> puts just the code on the clipboard; <b>Share link</b> sends the code and the link together to your group chat.</li>
           <li><b>Everyone else joins.</b> Open the link, tap <b>Join with a code</b>, type the code, tap <b>Join</b>. The fixtures and the live clock appear — nobody else creates anything.</li>
           <li><b>Play.</b> Open a match from Fixtures, tap <b>Start</b>, and tap <b>+</b> as the goals go in.</li>
         </ol>
@@ -901,7 +904,10 @@
             <button class="pill" id="codeNew" style="width:auto;padding:0 12px" aria-label="Suggest a code">New</button>
             <button class="pill" id="codeJoin" style="width:auto;padding:0 14px" aria-label="Join">Join</button>
           </div>
-          <button class="btn" id="codeShare" style="width:100%;margin-top:10px">Share the code</button>
+          <div class="share-row">
+            <button class="btn" id="codeCopy">Copy code</button>
+            <button class="btn" id="codeShare">Share link</button>
+          </div>
           <div class="status-line"><i class="live-dot" id="statusDot"></i><span id="statusText">Off</span></div>
         </div>
       </div>
@@ -2220,34 +2226,24 @@
     window.location.reload();   // reconnect cleanly to the new league
   });
 
-  /* Sharing the code: the share sheet is what people actually want, since it
-     goes straight into the group chat. Clipboard next, and if the browser
-     allows neither, highlight the code so it can be copied by hand. */
-  function copyText(text, button) {
+  /* Clipboard, with the selection trick where the API is unavailable
+     (plain http on a LAN, older browsers). */
+  function putOnClipboard(text, button, message) {
     var original = button.textContent;
-    function say(message) {
-      button.textContent = message;
+    function say(what) {
+      button.textContent = what;
       window.setTimeout(function () { button.textContent = original; }, 2600);
     }
 
-    var blurb = "Join my Saturday League with code " + text + " - " + window.location.href;
-
-    if (navigator.share) {
-      navigator.share({ title: "Saturday League", text: blurb })
-        .then(function () { say("Shared"); })
-        .catch(function () { /* cancelled, or not allowed - fall quiet */ });
-      return;
-    }
-
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(blurb).then(
-        function () { say("Copied - paste it to the group"); },
-        function () { selectCode(); say("Select the code above and copy"); });
+      navigator.clipboard.writeText(text).then(
+        function () { say(message); },
+        function () { selectCode(); say("Select it above and copy"); });
       return;
     }
 
     selectCode();
-    say("Select the code above and copy");
+    say("Select it above and copy");
   }
 
   function selectCode() {
@@ -2258,10 +2254,43 @@
     } catch (e) { /* ignore */ }
   }
 
-  document.getElementById("codeShare").addEventListener("click", function () {
-    var code = document.getElementById("codeInput").value.trim().toUpperCase();
+  function currentCode() {
+    return document.getElementById("codeInput").value.trim().toUpperCase();
+  }
+
+  /* Just the code, ready to paste into someone's Join box. */
+  document.getElementById("codeCopy").addEventListener("click", function () {
+    var code = currentCode();
     if (!code) { window.alert("Enter a league code first."); return; }
-    copyText(code, this);
+    putOnClipboard(code, this, "Copied " + code);
+  });
+
+  /* The code and the link, through the share sheet where there is one. */
+  document.getElementById("codeShare").addEventListener("click", function () {
+    var code = currentCode();
+    if (!code) { window.alert("Enter a league code first."); return; }
+    var blurb = "Join my Saturday League\nCode: " + code + "\n" + window.location.href;
+
+    if (navigator.share) {
+      var button = this;
+      var original = button.textContent;
+      navigator.share({ title: "Saturday League", text: blurb })
+        .then(function () {
+          button.textContent = "Shared";
+          window.setTimeout(function () { button.textContent = original; }, 2600);
+        })
+        .catch(function () { /* cancelled */ });
+      return;
+    }
+    putOnClipboard(blurb, this, "Link copied");
+  });
+
+  /* tapping the field selects the whole code, so it can be copied by hand */
+  document.getElementById("codeInput").addEventListener("focus", function () {
+    var field = this;
+    window.setTimeout(function () {
+      try { field.setSelectionRange(0, field.value.length); } catch (e) { /* ignore */ }
+    }, 0);
   });
 
   function suggestCode() {

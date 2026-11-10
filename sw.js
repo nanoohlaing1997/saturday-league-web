@@ -1,4 +1,4 @@
-var CACHE = "saturday-league-v31";
+var CACHE = "saturday-league-v32";
 var SHELL = [
   "./",
   "./index.html",

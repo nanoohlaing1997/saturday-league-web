@@ -848,8 +848,8 @@
       <div class="card guide">
         <ol>
           <li><b>Set it up.</b> In Setup choose the session length, name the four teams and pick their colours, set the minutes per match, then tap <b>Create the match list</b>.</li>
-          <li><b>Share the code.</b> In Setup, <b>Copy code</b> puts just the code on the clipboard; <b>Share link</b> sends the code and the link together to your group chat.</li>
-          <li><b>Everyone else joins.</b> Open the link, tap <b>Join with a code</b>, type the code, tap <b>Join</b>. The fixtures and the live clock appear — nobody else creates anything.</li>
+          <li><b>Send the code.</b> In Setup tap <b>Copy code</b>, then paste it into the group chat along with this page's link.</li>
+          <li><b>Everyone else joins.</b> Open the link, tap <b>Join with a code</b>, then <b>Paste code</b> and <b>Join</b>. The fixtures and the live clock appear — nobody else creates anything.</li>
           <li><b>Play.</b> Open a match from Fixtures, tap <b>Start</b>, and tap <b>+</b> as the goals go in.</li>
         </ol>
       </div>
@@ -906,7 +906,7 @@
           </div>
           <div class="share-row">
             <button class="btn" id="codeCopy">Copy code</button>
-            <button class="btn" id="codeShare">Share link</button>
+            <button class="btn" id="codePaste">Paste code</button>
           </div>
           <div class="status-line"><i class="live-dot" id="statusDot"></i><span id="statusText">Off</span></div>
         </div>
@@ -2265,24 +2265,47 @@
     putOnClipboard(code, this, "Copied " + code);
   });
 
-  /* The code and the link, through the share sheet where there is one. */
-  document.getElementById("codeShare").addEventListener("click", function () {
-    var code = currentCode();
-    if (!code) { window.alert("Enter a league code first."); return; }
-    var blurb = "Join my Saturday League\nCode: " + code + "\n" + window.location.href;
+  /* The other side of the flow: paste the code a teammate sent you. */
+  document.getElementById("codePaste").addEventListener("click", function () {
+    var button = this;
+    var field = document.getElementById("codeInput");
+    var original = button.textContent;
+    function say(what) {
+      button.textContent = what;
+      window.setTimeout(function () { button.textContent = original; }, 2600);
+    }
 
-    if (navigator.share) {
-      var button = this;
-      var original = button.textContent;
-      navigator.share({ title: "Saturday League", text: blurb })
-        .then(function () {
-          button.textContent = "Shared";
-          window.setTimeout(function () { button.textContent = original; }, 2600);
-        })
-        .catch(function () { /* cancelled */ });
+    function fill(text) {
+      var raw = String(text);
+      var code = "";
+
+      // a whole shared message carries "Code: SAT-7K2M"
+      var labelled = raw.match(/code\s*[:\-]?\s*([A-Za-z0-9-]{4,})/i);
+      if (labelled) {
+        code = labelled[1].toUpperCase();
+      } else {
+        var words = raw.toUpperCase().replace(/[^A-Z0-9-]/g, " ").trim().split(/\s+/)
+          .filter(function (word) { return word.length >= 4; });
+        // a code carries a digit or a hyphen; plain words do not
+        var codeish = words.filter(function (word) { return /[0-9-]/.test(word); });
+        code = codeish[0] || words[0] || "";
+      }
+
+      if (!code) { say("Nothing to paste"); return; }
+      field.value = code;
+      say("Pasted " + code + " - now tap Join");
+    }
+
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(fill, function () {
+        try { field.focus(); } catch (e) { /* ignore */ }
+        say("Press and hold the box to paste");
+      });
       return;
     }
-    putOnClipboard(blurb, this, "Link copied");
+
+    try { field.focus(); } catch (e) { /* ignore */ }
+    say("Press and hold the box to paste");
   });
 
   /* tapping the field selects the whole code, so it can be copied by hand */

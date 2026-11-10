@@ -793,6 +793,7 @@
                    autocorrect="off" spellcheck="false" aria-label="League code">
             <button class="pill" id="codeJoin" style="width:auto;padding:0 14px" aria-label="Join">Join</button>
           </div>
+          <button class="btn" id="codeShare" style="width:100%;margin-top:10px">Copy code to share</button>
           <div class="status-line"><i class="live-dot" id="statusDot"></i><span id="statusText">Off</span></div>
         </div>
       </div>
@@ -865,6 +866,7 @@
                  autocorrect="off" spellcheck="false" aria-label="League code">
           <button class="pill" id="obDice" style="width:auto;padding:0 14px" aria-label="Suggest a code">New</button>
         </div>
+        <button class="btn" id="obShare" style="width:100%;margin-top:10px">Copy code to share</button>
         <p class="hint" style="text-align:left;margin:11px 2px 0">
           Share this code so everyone follows the same league and sees live scores.
           Clear it to keep everything on this phone only.
@@ -1470,6 +1472,13 @@
     role = (someoneElseRefereeing() && sync.live.matchId === id) ? "watch" : "ref";
     view.dataset.role = role;
 
+    var blocked = someoneElseRefereeing() && sync.live.matchId !== id;
+    document.getElementById("startPause").disabled = blocked;
+    document.getElementById("hint").textContent = blocked
+      ? ("Match " + sync.live.matchId + " is live on another phone. One match at a time — " +
+         "this one can start when that finishes.")
+      : "The screen stays on while the clock runs. You can switch to another app — the whistle still sounds at full time, as long as the ringer is on.";
+
     paintGoals();
     paintClock();
     if (role === "watch") applyWatched();
@@ -1543,6 +1552,21 @@
 
   function start() {
     if (remaining === 0) return;
+
+    // someone else already has the league's clock
+    if (someoneElseRefereeing() && sync.live.matchId !== current.id) {
+      var busy = null;
+      for (var i = 0; i < state.matches.length; i++) {
+        if (state.matches[i].id === sync.live.matchId) { busy = state.matches[i]; break; }
+      }
+      window.alert(
+        "Match " + sync.live.matchId +
+        (busy ? " (" + tname(busy.home) + " v " + tname(busy.away) + ")" : "") +
+        " is live on another phone. Only one match runs at a time — wait for it to " +
+        "finish, or open it and take over.");
+      return;
+    }
+
     endAt = Date.now() + remaining * 1000;
     running = true;
     blown = false;
@@ -1958,6 +1982,11 @@
     sync.live = snap.val();
     renderFixtures();
 
+    if (current && role === "ref") {
+      var blocked = someoneElseRefereeing() && sync.live.matchId !== current.id;
+      document.getElementById("startPause").disabled = blocked || remaining === 0;
+    }
+
     // watching someone else's match: follow their clock and score
     if (current && role === "watch") {
       if (!sync.live || sync.live.matchId !== current.id) { closeMatch(); return; }
@@ -2000,6 +2029,40 @@
   /* ------------ first run ------------
      Setup comes first: session length, team names and the league code. The
      Setup tab keeps all of it editable afterwards. */
+
+  /* Clipboard needs a secure context; over plain http on the LAN it is absent,
+     so fall back to the old selection trick. */
+  function copyText(text, button) {
+    function done(ok) {
+      var original = button.textContent;
+      button.textContent = ok ? "Copied — paste it to the group" : "Press and hold the code to copy";
+      window.setTimeout(function () { button.textContent = original; }, 2200);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+      return;
+    }
+    try {
+      var temp = document.createElement("textarea");
+      temp.value = text;
+      document.body.appendChild(temp);
+      temp.select();
+      done(document.execCommand("copy"));
+      document.body.removeChild(temp);
+    } catch (e) { done(false); }
+  }
+
+  document.getElementById("codeShare").addEventListener("click", function () {
+    var code = document.getElementById("codeInput").value.trim().toUpperCase();
+    if (!code) return;
+    copyText(code, this);
+  });
+
+  document.getElementById("obShare").addEventListener("click", function () {
+    var code = document.getElementById("obCode").value.trim().toUpperCase();
+    if (!code) return;
+    copyText(code, this);
+  });
 
   function suggestCode() {
     var letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";

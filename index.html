@@ -865,6 +865,7 @@
           <li>Only one match runs at a time. Other matches cannot start until this one is saved.</li>
           <li>Everyone else sees a <b>Live now</b> banner with the score and a ticking clock. Tap it to watch.</li>
           <li>If the referee's phone dies, anyone can open that match and tap <b>Take over as referee</b>. The old referee drops to watching.</li>
+          <li>While your clock is running there is no way back to the fixtures — pause it first. That stops a stray tap ending a match.</li>
           <li>Leaving a match you are refereeing releases the clock, so someone else can start.</li>
           <li>At full time it whistles, buzzes, and shows the score with <b>Save result</b>, then offers the next match.</li>
         </ul>
@@ -1597,7 +1598,7 @@
     document.getElementById("hint").textContent = blocked
       ? ("Match " + sync.live.matchId + " is live on another phone. One match at a time — " +
          "this one can start when that finishes.")
-      : "The screen stays on while the clock runs. You can switch to another app — the whistle still sounds at full time, as long as the ringer is on.";
+      : NORMAL_HINT;
 
     paintGoals();
     paintClock();
@@ -1665,6 +1666,9 @@
     document.getElementById("goalsAway").textContent = draft.away;
   }
 
+  var NORMAL_HINT = "The screen stays on while the clock runs. You can switch to another app — " +
+                    "the whistle still sounds at full time, as long as the ringer is on.";
+
   function paintClock() {
     var mins = Math.floor(remaining / 60);
     var secs = remaining % 60;
@@ -1677,6 +1681,14 @@
     stateEl.textContent = remaining === 0 ? "Full time" : (running ? "Playing" : "Paused");
     startBtn.textContent = running ? "Pause" : "Start";
     startBtn.disabled = remaining === 0;
+
+    // the referee's clock is running: hide the way out so it cannot be left by accident
+    var refereeing = running && role === "ref";
+    document.getElementById("backBtn").hidden = refereeing;
+    if (refereeing) {
+      document.getElementById("hint").textContent =
+        "Pause the clock if you need to go back to the fixtures.";
+    }
   }
 
   function start() {
@@ -1711,6 +1723,8 @@
 
   function stop() {
     running = false;
+    document.getElementById("backBtn").hidden = false;
+    if (role === "ref") document.getElementById("hint").textContent = NORMAL_HINT;
     endAt = null;
     if (ticker) { window.clearInterval(ticker); ticker = null; }
     disarmWhistle();
@@ -1746,11 +1760,7 @@
     paintClock();
   });
 
-  document.getElementById("backBtn").addEventListener("click", function () {
-    if (running && role === "ref" &&
-        !window.confirm("The clock is still running. Leave this match?")) return;
-    closeMatch();
-  });
+  document.getElementById("backBtn").addEventListener("click", closeMatch);
 
   [].slice.call(document.querySelectorAll(".pm button")).forEach(function (b) {
     b.addEventListener("click", function () {

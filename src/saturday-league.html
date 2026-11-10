@@ -1,0 +1,2117 @@
+<title>Saturday League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
+
+<style>
+  :root {
+    --paper:   #F0F2EE;
+    --surface: #FFFFFF;
+    --sunk:    #E6EAE4;
+    --ink:     #111E1A;
+    --ink-soft:#5C6B65;
+    --line:    #D7DDD6;
+    --warn:    #B4541C;
+    --shadow:  0 1px 2px rgba(17,30,26,.06), 0 8px 24px -16px rgba(17,30,26,.25);
+
+    --display: "Barlow Condensed", "Haettenschweiler", Impact, sans-serif;
+    --body: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+    --r: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:   #0D1412;
+      --surface: #17201D;
+      --sunk:    #111A17;
+      --ink:     #E8EDE8;
+      --ink-soft:#8A9992;
+      --line:    #27322E;
+      --warn:    #E08A4A;
+      --shadow:  0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:   #0D1412;
+    --surface: #17201D;
+    --sunk:    #111A17;
+    --ink:     #E8EDE8;
+    --ink-soft:#8A9992;
+    --line:    #27322E;
+    --warn:    #E08A4A;
+    --shadow:  0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .app {
+    max-width: 520px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);
+  }
+
+  /* ---- masthead ---- */
+  header.mast {
+    padding: calc(20px + env(safe-area-inset-top)) 20px 14px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .mast h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 30px;
+    letter-spacing: .01em;
+    text-transform: uppercase;
+    margin: 0;
+    line-height: 1;
+  }
+  .mast .progress {
+    font-family: var(--display);
+    font-size: 15px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  main { flex: 1; padding: 16px 16px 96px; }
+  .panel[hidden] { display: none; }
+
+  /* ---- shared bits ---- */
+  .eyebrow {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 26px 4px 8px;
+  }
+  .eyebrow::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+  .eyebrow:first-child { margin-top: 4px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  button { font: inherit; color: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  /* ---- up next ---- */
+  .next {
+    width: 100%;
+    text-align: left;
+    background: var(--ink);
+    color: var(--paper);
+    border: 0;
+    border-radius: var(--r);
+    padding: 16px 18px 18px;
+    display: block;
+    box-shadow: var(--shadow);
+  }
+  .next .label {
+    font-family: var(--display);
+    font-size: 13px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    opacity: .62;
+  }
+  .next .vs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    font-family: var(--display);
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1.05;
+    text-transform: uppercase;
+  }
+  .next .vs small { font-size: 18px; opacity: .55; font-weight: 500; }
+  .next .meta {
+    margin-top: 8px;
+    font-size: 13px;
+    opacity: .66;
+    font-variant-numeric: tabular-nums;
+  }
+  .swatch {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    flex: none;
+    box-shadow: 0 0 0 1px rgba(128, 140, 134, .5);
+  }
+
+  /* ---- fixture rows ---- */
+  .rows { display: flex; flex-direction: column; }
+  .row {
+    display: grid;
+    grid-template-columns: 24px 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 13px 14px;
+    text-align: left;
+  }
+  .row:last-child { border-bottom: 0; }
+  .row:active { background: var(--sunk); }
+  .row .no {
+    font-family: var(--display);
+    font-size: 15px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  .row .side {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    font-weight: 500;
+    font-size: 15px;
+  }
+  .row .side span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .row .side.away { justify-content: flex-end; }
+  .row .score {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding: 1px 9px;
+    border-radius: 7px;
+    background: var(--sunk);
+    letter-spacing: .02em;
+  }
+  .row .score.pending {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .1em;
+    color: var(--ink-soft);
+    background: none;
+    text-transform: uppercase;
+  }
+
+  /* ---- table ---- */
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    padding: 11px 4px;
+    border-bottom: 1px solid var(--line);
+    text-align: right;
+  }
+  thead th:first-child, thead th:nth-child(2) { text-align: left; }
+  tbody td {
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--line);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+    color: var(--ink-soft);
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody td.pos {
+    text-align: left;
+    width: 30px;
+    padding-left: 14px;
+    font-family: var(--display);
+    font-size: 16px;
+  }
+  tbody td.team {
+    text-align: left;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 15px;
+  }
+  tbody td.team div { display: flex; align-items: center; gap: 8px; }
+  tbody td.pts {
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 17px;
+    padding-right: 14px;
+    font-family: var(--display);
+  }
+  tbody tr.leader td { background: var(--sunk); }
+  .note {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 12px 6px 0;
+    line-height: 1.5;
+  }
+
+  /* ---- setup ---- */
+  .field { padding: 14px; border-bottom: 1px solid var(--line); }
+  .field:last-child { border-bottom: 0; }
+  .field input[type="text"] {
+    width: 100%;
+    font: 700 18px/1.3 var(--body);
+    color: var(--ink);
+    background: var(--sunk);
+    border: 1px solid transparent;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .field input[type="text"]:focus { border-color: var(--ink); outline: none; }
+  .dots {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-top: 13px;
+    justify-items: center;
+  }
+  .dot {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    outline: 1px solid var(--line);
+    outline-offset: -1px;
+    padding: 0;
+    box-shadow: inset 0 0 0 3px var(--surface), 0 0 0 1px var(--line);
+  }
+  .dot[aria-pressed="true"] {
+    border-color: var(--ink);
+    box-shadow: inset 0 0 0 3px var(--surface);
+  }
+  .dot:active { transform: scale(.92); }
+
+  .stepline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .stepline .cap {
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .stepline .val {
+    font-family: var(--display);
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    min-width: 76px;
+    text-align: center;
+  }
+  .pill {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 9px;
+    width: 42px; height: 38px;
+    font-size: 20px;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+  }
+  .pill:active { background: var(--sunk); }
+
+  .danger {
+    width: 100%;
+    background: none;
+    border: 0;
+    padding: 15px;
+    font-weight: 600;
+    color: var(--warn);
+  }
+
+  /* ---- tab bar ---- */
+  nav.tabs {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 20;
+  }
+  nav.tabs > div { max-width: 520px; margin: 0 auto; display: flex; width: 100%; }
+  .tab {
+    flex: 1;
+    background: none;
+    border: 0;
+    padding: 13px 4px 15px;
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    position: relative;
+  }
+  .tab[aria-selected="true"] { color: var(--ink); }
+  .tab[aria-selected="true"]::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 30px; height: 2px;
+    background: var(--ink);
+  }
+
+  /* ---- match screen ---- */
+  .match {
+    position: fixed;
+    inset: 0;
+    background: var(--paper);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .match[hidden] { display: none; }
+  .match-inner {
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+    padding: calc(12px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 14px;
+  }
+  .match-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .back {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 14px 9px 11px;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .back:active { background: var(--sunk); }
+  .match-bar .tag {
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+
+  .clock { display: grid; place-items: center; position: relative; margin: 2px auto; }
+  .clock svg { width: min(68vw, 250px); height: min(68vw, 250px); display: block; transform: rotate(-90deg); }
+  .clock .track { fill: none; stroke: var(--line); stroke-width: 12; }
+  .clock .bar {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 12;
+    stroke-linecap: round;
+    transition: stroke-dashoffset .25s linear, stroke .3s;
+  }
+  .clock.final .bar { stroke: var(--warn); }
+  .clock .face {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    gap: 2px;
+  }
+  .clock .time {
+    font-family: var(--display);
+    font-size: clamp(54px, 17vw, 72px);
+    font-weight: 700;
+    line-height: .95;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .01em;
+  }
+  .clock.final .time { color: var(--warn); }
+  .clock .state {
+    font-family: var(--display);
+    font-size: 14px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .scorers { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; }
+  .scorer { display: grid; justify-items: center; gap: 7px; min-width: 0; }
+  .scorer .nm {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 100%;
+  }
+  .scorer .nm span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .scorer .goals {
+    font-family: var(--display);
+    font-size: 62px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .scorer .pm { display: flex; gap: 8px; }
+  .scorer .pm button {
+    width: 46px; height: 42px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 21px;
+    line-height: 1;
+  }
+  .scorer .pm button.add { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .scorer .pm button:active { transform: scale(.94); }
+  .dash { font-family: var(--display); font-size: 30px; color: var(--ink-soft); padding-bottom: 28px; }
+
+  .actions { display: flex; gap: 10px; }
+  .btn {
+    flex: 1;
+    border-radius: 11px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    padding: 14px;
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  .btn.solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .btn:active { transform: scale(.985); }
+  .btn[disabled] { opacity: .4; }
+  /* ---- live sharing ---- */
+  .live-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--ink-soft);
+    flex: none;
+  }
+  .live-dot.on { background: #3C8B55; box-shadow: 0 0 0 3px rgba(60,139,85,.18); }
+  .live-dot.err { background: var(--warn); }
+
+  .mast .progress { display: flex; align-items: center; gap: 7px; }
+
+  .banner {
+    width: 100%;
+    text-align: left;
+    background: var(--ink);
+    color: var(--paper);
+    border: 0;
+    border-radius: var(--r);
+    padding: 15px 18px 17px;
+    display: block;
+    box-shadow: var(--shadow);
+    margin-bottom: 10px;
+  }
+  .banner .label {
+    font-family: var(--display);
+    font-size: 13px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .banner .label .pulse {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #6BD08C;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+  .banner .vs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    font-family: var(--display);
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 1.05;
+    text-transform: uppercase;
+  }
+  .banner .vs .sc { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .banner .meta { margin-top: 6px; font-size: 13px; opacity: .66; font-variant-numeric: tabular-nums; }
+  .banner .live-clock {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    opacity: 1;
+  }
+
+  /* watchers see the clock, not the controls */
+  .match[data-role="watch"] .pm,
+  .match[data-role="watch"] .actions,
+  .match[data-role="watch"] .save { display: none; }
+  .match[data-role="ref"] .watch-only { display: none; }
+  .watch-only { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+
+  .onboard-head { margin: 10px 2px 2px; }
+  .onboard-head h2 {
+    font-family: var(--display);
+    font-size: 36px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    margin: 0;
+    line-height: 1;
+  }
+  .onboard-head p {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin: 8px 0 0;
+    max-width: 38ch;
+  }
+  #onboard .eyebrow { margin: 20px 2px 8px; }
+  #onboard .card .field:last-child { border-bottom: 0; }
+
+  .segmented { display: flex; gap: 8px; }
+  .segmented button {
+    flex: 1;
+    background: var(--sunk);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 11px 8px;
+    display: grid;
+    gap: 2px;
+    text-align: center;
+  }
+  .segmented button[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .segmented .t {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .segmented .s { font-size: 11.5px; opacity: .7; }
+
+  .code-row { display: flex; gap: 8px; align-items: center; }
+  .code-row input {
+    flex: 1;
+    font: 600 17px/1.3 var(--body);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: var(--sunk);
+    border: 1px solid transparent;
+    border-radius: 9px;
+    padding: 10px 12px;
+  }
+  .code-row input:focus { border-color: var(--ink); outline: none; }
+  .status-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 11px;
+  }
+
+  .hint {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--ink-soft);
+    text-align: center;
+    margin: 0 6px;
+  }
+  .save { margin-top: auto; }
+
+  /* ---- sheets: full time + next match ---- */
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(8, 14, 12, .55);
+    backdrop-filter: blur(3px);
+    display: grid;
+    align-items: end;
+    justify-items: center;
+    padding: 16px;
+    animation: fade .2s ease-out;
+  }
+  .backdrop[hidden] { display: none; }
+  @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes rise { from { transform: translateY(22px); opacity: 0 } to { transform: none; opacity: 1 } }
+
+  .sheet {
+    width: 100%;
+    max-width: 488px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
+    box-shadow: 0 -2px 40px -8px rgba(0,0,0,.45);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    animation: rise .26s cubic-bezier(.2,.8,.3,1);
+  }
+  .sheet h2 {
+    font-family: var(--display);
+    font-size: 30px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin: 0;
+    text-align: center;
+    line-height: 1;
+  }
+  .sheet .lede {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin: -8px 0 0;
+  }
+  .ft-score {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 10px;
+    background: var(--sunk);
+    border-radius: 13px;
+    padding: 14px 12px;
+  }
+  .ft-side { display: grid; justify-items: center; gap: 5px; min-width: 0; }
+  .ft-side .nm {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    max-width: 100%;
+  }
+  .ft-side .nm span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ft-side .gl {
+    font-family: var(--display);
+    font-size: 46px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .ft-side.lost { opacity: .45; }
+  .ft-score .sep { font-family: var(--display); font-size: 24px; color: var(--ink-soft); }
+  .sheet-actions { display: flex; flex-direction: column; gap: 9px; }
+  .sheet .btn { width: 100%; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="app">
+  <header class="mast">
+    <h1>Saturday League</h1>
+    <div class="progress"><i class="live-dot" id="liveDot"></i><span id="progress"></span></div>
+  </header>
+
+  <main>
+    <section class="panel" id="panel-fixtures">
+      <div id="upnext"></div>
+      <div id="rounds"></div>
+    </section>
+
+    <section class="panel" id="panel-table" hidden>
+      <div class="eyebrow">Standings</div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th>
+            </tr>
+          </thead>
+          <tbody id="tablebody"></tbody>
+        </table>
+      </div>
+      <p class="note">Three points for a win, one for a draw. Ranked by points, then goal difference, then goals scored.</p>
+    </section>
+
+    <section class="panel" id="panel-setup" hidden>
+      <div class="eyebrow">Session</div>
+      <div class="card">
+        <div class="field">
+          <div class="segmented" id="formatPick"></div>
+        </div>
+      </div>
+      <p class="note">Two hours fits 16 matches of 7 minutes; two and a half fits 20. Both allow time to swap ends between games. Changing this clears the results.</p>
+
+      <div class="eyebrow">Teams</div>
+      <div class="card" id="teamfields"></div>
+
+      <div class="eyebrow">Live sharing</div>
+      <div class="card">
+        <div class="field">
+          <div class="code-row">
+            <input id="codeInput" type="text" placeholder="LEAGUE CODE" autocapitalize="characters"
+                   autocorrect="off" spellcheck="false" aria-label="League code">
+            <button class="pill" id="codeJoin" style="width:auto;padding:0 14px" aria-label="Join">Join</button>
+          </div>
+          <div class="status-line"><i class="live-dot" id="statusDot"></i><span id="statusText">Off</span></div>
+        </div>
+      </div>
+      <p class="note">Everyone who enters the same code sees the same fixtures, scores and table. Whoever starts a match runs the clock; the other phones watch live.</p>
+
+      <div class="eyebrow">Match length</div>
+      <div class="card">
+        <div class="field">
+          <div class="stepline">
+            <span class="cap">Minutes</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <button class="pill" id="lenDown" aria-label="Shorter">−</button>
+              <span class="val" id="lenVal"></span>
+              <button class="pill" id="lenUp" aria-label="Longer">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="eyebrow">Reset</div>
+      <div class="card">
+        <button class="danger" id="resetBtn">Clear all results</button>
+      </div>
+      <p class="note" id="resetNote"></p>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <div>
+      <button class="tab" role="tab" aria-selected="true" data-panel="fixtures">Fixtures</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="table">Table</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="setup">Setup</button>
+    </div>
+  </nav>
+</div>
+
+<div class="match" id="onboard" hidden>
+  <div class="match-inner">
+    <div class="onboard-head">
+      <h2>Saturday League</h2>
+      <p>Four teams, 7-minute games. Set it up once — you can change any of it later in Setup.</p>
+    </div>
+
+    <div class="eyebrow">How long is the session?</div>
+    <div class="segmented" id="obFormat"></div>
+
+    <div class="eyebrow">Team names</div>
+    <div class="card" id="obTeams"></div>
+
+    <div class="eyebrow">How long is each match?</div>
+    <div class="card">
+      <div class="field">
+        <div class="stepline">
+          <span class="cap">Minutes</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button class="pill" id="obLenDown" aria-label="Shorter">−</button>
+            <span class="val" id="obLenVal"></span>
+            <button class="pill" id="obLenUp" aria-label="Longer">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint" id="obLenNote" style="text-align:left;margin:11px 4px 0"></p>
+
+    <div class="eyebrow">League code</div>
+    <div class="card">
+      <div class="field">
+        <div class="code-row">
+          <input id="obCode" type="text" placeholder="LEAGUE CODE" autocapitalize="characters"
+                 autocorrect="off" spellcheck="false" aria-label="League code">
+          <button class="pill" id="obDice" style="width:auto;padding:0 14px" aria-label="Suggest a code">New</button>
+        </div>
+        <p class="hint" style="text-align:left;margin:11px 2px 0">
+          Share this code so everyone follows the same league and sees live scores.
+          Clear it to keep everything on this phone only.
+        </p>
+      </div>
+    </div>
+
+    <div class="save">
+      <button class="btn solid" id="obStart" style="width:100%">Create league</button>
+    </div>
+  </div>
+</div>
+
+<div class="match" id="matchView" hidden>
+  <div class="match-inner">
+    <div class="match-bar">
+      <button class="back" id="backBtn">‹ Fixtures</button>
+      <span class="tag" id="matchTag"></span>
+    </div>
+
+    <div class="clock" id="clock">
+      <svg viewBox="0 0 240 240" aria-hidden="true">
+        <circle class="track" cx="120" cy="120" r="106"></circle>
+        <circle class="bar" id="bar" cx="120" cy="120" r="106"></circle>
+      </svg>
+      <div class="face">
+        <div class="time" id="timeText">7:00</div>
+        <div class="state" id="stateText">Ready</div>
+      </div>
+    </div>
+
+    <div class="scorers">
+      <div class="scorer">
+        <div class="nm"><i class="swatch" id="swHome"></i><span id="nameHome"></span></div>
+        <div class="goals" id="goalsHome">0</div>
+        <div class="pm">
+          <button data-side="home" data-delta="-1" aria-label="Remove goal">−</button>
+          <button class="add" data-side="home" data-delta="1" aria-label="Add goal">+</button>
+        </div>
+      </div>
+      <div class="dash">–</div>
+      <div class="scorer">
+        <div class="nm"><i class="swatch" id="swAway"></i><span id="nameAway"></span></div>
+        <div class="goals" id="goalsAway">0</div>
+        <div class="pm">
+          <button data-side="away" data-delta="-1" aria-label="Remove goal">−</button>
+          <button class="add" data-side="away" data-delta="1" aria-label="Add goal">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="resetClock">Reset</button>
+      <button class="btn solid" id="startPause">Start</button>
+    </div>
+
+    <p class="hint" id="hint">The screen stays on while the clock runs. You can switch to another app — the whistle still sounds at full time, as long as the ringer is on.</p>
+
+    <div class="save">
+      <button class="btn solid" id="saveBtn" style="width:100%">Save result</button>
+    </div>
+
+    <div class="watch-only">
+      <p class="hint">Someone else is refereeing this match. The clock and score follow their phone.</p>
+      <button class="btn" id="takeover">Take over as referee</button>
+    </div>
+  </div>
+</div>
+
+<div class="backdrop" id="ftSheet" hidden role="dialog" aria-modal="true" aria-labelledby="ftTitle">
+  <div class="sheet">
+    <h2 id="ftTitle">Full time</h2>
+    <p class="lede" id="ftLede">Match 1 · Round 1</p>
+    <div class="ft-score">
+      <div class="ft-side" id="ftHome">
+        <div class="nm"><i class="swatch" id="ftSwHome"></i><span id="ftNameHome"></span></div>
+        <div class="gl" id="ftGoalsHome">0</div>
+      </div>
+      <div class="sep">–</div>
+      <div class="ft-side" id="ftAway">
+        <div class="nm"><i class="swatch" id="ftSwAway"></i><span id="ftNameAway"></span></div>
+        <div class="gl" id="ftGoalsAway">0</div>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn solid" id="ftSave">Save result</button>
+      <button class="btn" id="ftPlayOn">Not finished — go back</button>
+    </div>
+  </div>
+</div>
+
+<div class="backdrop" id="nextSheet" hidden role="dialog" aria-modal="true" aria-labelledby="nextTitle">
+  <div class="sheet">
+    <h2 id="nextTitle">Result saved</h2>
+    <p class="lede" id="nextLede"></p>
+    <div class="ft-score" id="nextFixture">
+      <div class="ft-side">
+        <div class="nm"><i class="swatch" id="nxSwHome"></i><span id="nxNameHome"></span></div>
+      </div>
+      <div class="sep">vs</div>
+      <div class="ft-side">
+        <div class="nm"><i class="swatch" id="nxSwAway"></i><span id="nxNameAway"></span></div>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn solid" id="nxStart">Start this match</button>
+      <button class="btn" id="nxChoose">Pick a different match</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "saturday-league-v1";
+
+  /* Two session formats. Both run four games a round; the round grid is the
+     schedule as written on the sheet. */
+  var FORMATS = {
+    twoHour: {
+      label: "2 hours",
+      sub: "16 matches · 4 rounds",
+      pairs: [
+        ["A","B"], ["C","D"], ["A","C"], ["B","D"],
+        ["A","D"], ["B","C"], ["A","B"], ["C","D"],
+        ["A","C"], ["B","D"], ["A","D"], ["B","C"],
+        ["A","B"], ["C","D"], ["A","C"], ["B","D"]
+      ]
+    },
+    full: {
+      label: "2h 30m",
+      sub: "20 matches · 5 rounds",
+      pairs: [
+        ["A","B"], ["C","D"], ["A","C"], ["B","D"],
+        ["A","D"], ["B","C"], ["A","B"], ["C","D"],
+        ["A","C"], ["B","D"], ["B","C"], ["A","D"],
+        ["A","B"], ["C","D"], ["A","B"], ["C","D"],
+        ["B","D"], ["A","C"], ["A","D"], ["B","C"]
+      ]
+    }
+  };
+
+  var PALETTE = ["#D64545","#2F6FB3","#3C8B55","#D98324","#7A4FA3","#1F8A8A",
+                 "#C2A32B","#6E5243","#E0559B","#B4FF2E","#000000","#FFFFFF"];
+
+  /* A team colour has to work as a swatch *and* as text on either theme.
+     Pure black is invisible on the dark ground and pure white on the light
+     one, so text takes a lifted or dropped version while the swatch keeps
+     the true colour. */
+  function isDarkTheme() {
+    var stamped = document.documentElement.getAttribute("data-theme");
+    if (stamped) return stamped === "dark";
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+
+  function luminance(hex) {
+    var v = parseInt(hex.replace("#", ""), 16);
+    var r = (v >> 16) & 255, g = (v >> 8) & 255, b = v & 255;
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  }
+
+  function mix(hex, towards, amount) {
+    var v = parseInt(hex.replace("#", ""), 16);
+    var t = parseInt(towards.replace("#", ""), 16);
+    var out = 0;
+    for (var shift = 16; shift >= 0; shift -= 8) {
+      var a = (v >> shift) & 255, b = (t >> shift) & 255;
+      out |= Math.round(a + (b - a) * amount) << shift;
+    }
+    return "#" + ("000000" + out.toString(16)).slice(-6);
+  }
+
+  /* the version of a team colour safe to set text in */
+  function readable(hex) {
+    var l = luminance(hex);
+    if (isDarkTheme()) return l < 0.22 ? mix(hex, "#FFFFFF", 0.72) : hex;
+    return l > 0.75 ? mix(hex, "#000000", 0.42) : hex;
+  }
+
+  function blankMatches(formatKey) {
+    var fmt = FORMATS[formatKey] || FORMATS.twoHour;
+    return fmt.pairs.map(function (p, i) {
+      return { id: i + 1, home: p[0], away: p[1], hg: 0, ag: 0, played: false };
+    });
+  }
+
+  function roundCount() { return Math.ceil(state.matches.length / 4); }
+
+  function defaults() {
+    return {
+      teams: [
+        { id: "A", name: "Team A", color: PALETTE[0] },
+        { id: "B", name: "Team B", color: PALETTE[1] },
+        { id: "C", name: "Team C", color: PALETTE[2] },
+        { id: "D", name: "Team D", color: PALETTE[3] }
+      ],
+      matches: blankMatches("twoHour"),
+      format: "twoHour",
+      minutes: 7
+    };
+  }
+
+  var state = load();
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.matches && parsed.matches.length % 4 === 0 && parsed.matches.length > 0) {
+          if (!parsed.format) parsed.format = parsed.matches.length === 16 ? "twoHour" : "full";
+          return parsed;
+        }
+      }
+    } catch (e) { /* storage unavailable or corrupt — fall through */ }
+    return defaults();
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+    pushDoc();
+  }
+
+  function team(id) {
+    for (var i = 0; i < state.teams.length; i++) if (state.teams[i].id === id) return state.teams[i];
+    return { id: id, name: id, color: "#888" };
+  }
+  function tname(id) { return team(id).name; }
+  function tcolor(id) { return team(id).color; }
+  function ttext(id) { return readable(team(id).color); }
+
+  function el(tag, cls) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    return n;
+  }
+  function swatch(id) {
+    var s = el("i", "swatch");
+    s.style.background = tcolor(id);
+    return s;
+  }
+
+  /* ------------ fixtures ------------ */
+
+  function renderProgress() {
+    var played = state.matches.filter(function (m) { return m.played; }).length;
+    document.getElementById("progress").textContent =
+      played + " / " + state.matches.length + " played";
+  }
+
+  function renderFixtures() {
+    var next = null;
+    for (var i = 0; i < state.matches.length; i++) {
+      if (!state.matches[i].played) { next = state.matches[i]; break; }
+    }
+
+    var host = document.getElementById("upnext");
+    host.textContent = "";
+
+    if (someoneElseRefereeing()) {
+      var live = sync.live;
+      var lm = null;
+      for (var k = 0; k < state.matches.length; k++) {
+        if (state.matches[k].id === live.matchId) { lm = state.matches[k]; break; }
+      }
+      if (lm) {
+        var banner = el("button", "banner");
+        var blab = el("div", "label");
+        blab.appendChild(el("i", "pulse"));
+        blab.appendChild(document.createTextNode("Live now · match " + lm.id));
+        var bvs = el("div", "vs");
+        bvs.appendChild(swatch(lm.home));
+        bvs.appendChild(document.createTextNode(tname(lm.home)));
+        var sep = el("small");
+        sep.textContent = "v";
+        bvs.appendChild(sep);
+        bvs.appendChild(swatch(lm.away));
+        bvs.appendChild(document.createTextNode(tname(lm.away)));
+        var sc = el("span", "sc");
+        sc.textContent = live.hg + "–" + live.ag;
+        bvs.appendChild(sc);
+        var bmeta = el("div", "meta");
+        var bclock = el("strong", "live-clock");
+        bclock.id = "liveClock";
+        bclock.textContent = liveRemainingText();
+        bmeta.appendChild(bclock);
+        bmeta.appendChild(document.createTextNode(
+          live.running ? " left · refereed on another phone" : " left · paused by the referee"));
+        banner.appendChild(blab);
+        banner.appendChild(bvs);
+        banner.appendChild(bmeta);
+        banner.addEventListener("click", function () { openMatch(live.matchId); });
+        host.appendChild(banner);
+      }
+    }
+
+    if (next) {
+      var btn = el("button", "next");
+      var lab = el("div", "label");
+      lab.textContent = "Up next · Match " + next.id;
+      var vs = el("div", "vs");
+      vs.appendChild(swatch(next.home));
+      vs.appendChild(document.createTextNode(tname(next.home)));
+      var small = el("small");
+      small.textContent = "vs";
+      vs.appendChild(small);
+      vs.appendChild(swatch(next.away));
+      vs.appendChild(document.createTextNode(tname(next.away)));
+      var meta = el("div", "meta");
+      meta.textContent = state.minutes + " minutes · round " + Math.ceil(next.id / 4);
+      btn.appendChild(lab); btn.appendChild(vs); btn.appendChild(meta);
+      btn.addEventListener("click", function () { openMatch(next.id); });
+      host.appendChild(btn);
+    } else {
+      var done = el("div", "card");
+      var p = el("div", "field");
+      p.style.textAlign = "center";
+      p.innerHTML = '<div style="font-family:var(--display);font-size:26px;text-transform:uppercase;font-weight:700">All ' +
+        state.matches.length + ' played</div>';
+      var sub = el("div");
+      sub.className = "note";
+      sub.style.margin = "4px 0 0";
+      sub.textContent = "Check the table for the winner.";
+      p.appendChild(sub);
+      done.appendChild(p);
+      host.appendChild(done);
+    }
+
+    var rounds = document.getElementById("rounds");
+    rounds.textContent = "";
+    for (var r = 1; r <= roundCount(); r++) {
+      var head = el("div", "eyebrow");
+      head.textContent = "Round " + r + " · " + ((r - 1) * 4 + 1) + "–" + (r * 4);
+      rounds.appendChild(head);
+
+      var card = el("div", "card");
+      var list = el("div", "rows");
+      state.matches
+        .filter(function (m) { return Math.ceil(m.id / 4) === r; })
+        .forEach(function (m) { list.appendChild(fixtureRow(m)); });
+      card.appendChild(list);
+      rounds.appendChild(card);
+    }
+  }
+
+  function fixtureRow(m) {
+    var row = el("button", "row");
+
+    var no = el("span", "no");
+    no.textContent = m.id;
+
+    var home = el("span", "side");
+    home.appendChild(swatch(m.home));
+    var hn = el("span");
+    hn.textContent = tname(m.home);
+    home.appendChild(hn);
+
+    var score = el("span", m.played ? "score" : "score pending");
+    score.textContent = m.played ? (m.hg + "–" + m.ag) : "vs";
+
+    var away = el("span", "side away");
+    var an = el("span");
+    an.textContent = tname(m.away);
+    away.appendChild(an);
+    away.appendChild(swatch(m.away));
+
+    row.appendChild(no);
+    row.appendChild(home);
+    row.appendChild(score);
+    row.appendChild(away);
+    row.addEventListener("click", function () { openMatch(m.id); });
+    return row;
+  }
+
+  /* ------------ table ------------ */
+
+  function renderTable() {
+    var rows = {};
+    state.teams.forEach(function (t) {
+      rows[t.id] = { t: t, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 };
+    });
+
+    state.matches.forEach(function (m) {
+      if (!m.played) return;
+      var h = rows[m.home], a = rows[m.away];
+      if (!h || !a) return;
+      h.p++; a.p++;
+      h.gf += m.hg; h.ga += m.ag;
+      a.gf += m.ag; a.ga += m.hg;
+      if (m.hg > m.ag) { h.w++; a.l++; }
+      else if (m.hg < m.ag) { a.w++; h.l++; }
+      else { h.d++; a.d++; }
+    });
+
+    var list = Object.keys(rows).map(function (k) {
+      var r = rows[k];
+      r.pts = r.w * 3 + r.d;
+      r.gd = r.gf - r.ga;
+      return r;
+    });
+
+    list.sort(function (x, y) {
+      return (y.pts - x.pts) || (y.gd - x.gd) || (y.gf - x.gf) || x.t.name.localeCompare(y.t.name);
+    });
+
+    var body = document.getElementById("tablebody");
+    body.textContent = "";
+    list.forEach(function (r, i) {
+      var tr = el("tr");
+      if (i === 0 && r.p > 0) tr.className = "leader";
+
+      var pos = el("td", "pos");
+      pos.textContent = i + 1;
+
+      var tm = el("td", "team");
+      var wrap = el("div");
+      var sw = el("i", "swatch");
+      sw.style.background = r.t.color;
+      var nm = el("span");
+      nm.textContent = r.t.name;
+      wrap.appendChild(sw); wrap.appendChild(nm);
+      tm.appendChild(wrap);
+
+      tr.appendChild(pos);
+      tr.appendChild(tm);
+      [r.p, r.w, r.d, r.l].forEach(function (v) {
+        var td = el("td");
+        td.textContent = v;
+        tr.appendChild(td);
+      });
+      var gd = el("td");
+      gd.textContent = r.gd > 0 ? "+" + r.gd : String(r.gd);
+      tr.appendChild(gd);
+      var pts = el("td", "pts");
+      pts.textContent = r.pts;
+      tr.appendChild(pts);
+
+      body.appendChild(tr);
+    });
+  }
+
+  /* ------------ setup ------------ */
+
+  function renderSetup() {
+    var pick = document.getElementById("formatPick");
+    pick.textContent = "";
+    Object.keys(FORMATS).forEach(function (key) {
+      var fmt = FORMATS[key];
+      var b = el("button");
+      b.setAttribute("aria-pressed", String(state.format === key));
+      var t = el("span", "t");
+      t.textContent = fmt.label;
+      var sub = el("span", "s");
+      sub.textContent = fmt.sub;
+      b.appendChild(t);
+      b.appendChild(sub);
+      b.addEventListener("click", function () {
+        if (state.format === key) return;
+        var played = state.matches.filter(function (m) { return m.played; }).length;
+        if (played > 0 && !window.confirm(
+              "Switch to " + fmt.label + " (" + fmt.sub + ")? This clears the " +
+              played + " result" + (played === 1 ? "" : "s") + " already recorded.")) return;
+        state.format = key;
+        state.matches = blankMatches(key);
+        save();
+        renderAll();
+      });
+      pick.appendChild(b);
+    });
+
+    var host = document.getElementById("teamfields");
+    host.textContent = "";
+
+    state.teams.forEach(function (t) {
+      var field = el("div", "field");
+
+      var input = el("input");
+      input.type = "text";
+      input.value = t.name;
+      input.setAttribute("aria-label", "Name for team " + t.id);
+      input.style.color = readable(t.color);
+      input.addEventListener("input", function () {
+        t.name = input.value.trim() === "" ? "Team " + t.id : input.value;
+        save();
+        renderFixtures();
+        renderTable();
+      });
+
+      var dots = el("div", "dots");
+      PALETTE.forEach(function (hex) {
+        var d = el("button", "dot");
+        d.style.background = hex;
+        d.setAttribute("aria-pressed", String(t.color === hex));
+        d.setAttribute("aria-label", "Use this colour");
+        d.addEventListener("click", function () {
+          t.color = hex;
+          save();
+          renderSetup();
+          renderFixtures();
+          renderTable();
+        });
+        dots.appendChild(d);
+      });
+
+      field.appendChild(input);
+      field.appendChild(dots);
+      host.appendChild(field);
+    });
+
+    document.getElementById("lenVal").textContent = state.minutes + " min";
+
+    var played = state.matches.filter(function (m) { return m.played; }).length;
+    document.getElementById("resetBtn").textContent =
+      played === 0 ? "Nothing to clear" : ("Clear " + played + " result" + (played === 1 ? "" : "s"));
+    document.getElementById("resetBtn").disabled = played === 0;
+    document.getElementById("resetNote").textContent = played === 0
+      ? "No results recorded yet. Team names, colours and match length are kept when you clear."
+      : (played + " of " + state.matches.length + " matches played. Clearing keeps team names, colours and match length.");
+  }
+
+  document.getElementById("lenUp").addEventListener("click", function () {
+    state.minutes = Math.min(45, state.minutes + 1);
+    save(); renderSetup(); renderFixtures();
+  });
+  document.getElementById("lenDown").addEventListener("click", function () {
+    state.minutes = Math.max(1, state.minutes - 1);
+    save(); renderSetup(); renderFixtures();
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!window.confirm("Clear every score and mark all " + state.matches.length + " matches unplayed?")) return;
+    state.matches = blankMatches(state.format);
+    save();
+    renderAll();
+  });
+
+  /* ------------ tabs ------------ */
+
+  var tabs = [].slice.call(document.querySelectorAll(".tab"));
+
+  function showTab(name) {
+    tabs.forEach(function (t) {
+      var on = t.dataset.panel === name;
+      t.setAttribute("aria-selected", String(on));
+      document.getElementById("panel-" + t.dataset.panel).hidden = !on;
+    });
+    window.scrollTo(0, 0);
+  }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener("click", function () { showTab(tab.dataset.panel); });
+  });
+
+  /* ------------ match screen ------------ */
+
+  var view = document.getElementById("matchView");
+  var barEl = document.getElementById("bar");
+  var clockEl = document.getElementById("clock");
+  var timeEl = document.getElementById("timeText");
+  var stateEl = document.getElementById("stateText");
+  var startBtn = document.getElementById("startPause");
+
+  var CIRC = 2 * Math.PI * 106;
+  barEl.style.strokeDasharray = CIRC;
+
+  var current = null;      // match on screen
+  var role = "ref";        // "ref" = this phone runs the clock, "watch" = following
+  var total = 0;           // seconds in a match
+  var remaining = 0;
+  var endAt = null;
+  var running = false;
+  var blown = false;
+  var ticker = null;
+  var wakeLock = null;
+  var draft = { home: 0, away: 0 };
+
+  function openMatch(id) {
+    current = null;
+    for (var i = 0; i < state.matches.length; i++) {
+      if (state.matches[i].id === id) { current = state.matches[i]; break; }
+    }
+    if (!current) return;
+
+    total = state.minutes * 60;
+    remaining = total;
+    endAt = null;
+    running = false;
+    blown = false;
+    draft.home = current.hg;
+    draft.away = current.ag;
+
+    document.getElementById("matchTag").textContent =
+      "Match " + current.id + " · Round " + Math.ceil(current.id / 4);
+    document.getElementById("nameHome").textContent = tname(current.home);
+    document.getElementById("nameAway").textContent = tname(current.away);
+    document.getElementById("swHome").style.background = tcolor(current.home);
+    document.getElementById("swAway").style.background = tcolor(current.away);
+    document.getElementById("saveBtn").textContent =
+      current.played ? "Update result" : "Save result";
+
+    // if someone else already has this match running, follow rather than referee
+    role = (someoneElseRefereeing() && sync.live.matchId === id) ? "watch" : "ref";
+    view.dataset.role = role;
+
+    paintGoals();
+    paintClock();
+    if (role === "watch") applyWatched();
+    view.hidden = false;
+    window.scrollTo(0, 0);
+  }
+
+  /* mirror the referee's clock and score */
+  function applyWatched() {
+    var live = sync.live;
+    if (!live || !current) return;
+    draft.home = live.hg;
+    draft.away = live.ag;
+    total = live.total || total;
+    if (live.running && live.endAt) {
+      remaining = Math.max(0, Math.ceil((live.endAt - Date.now()) / 1000));
+      running = true;
+      if (!ticker) ticker = window.setInterval(function () {
+        if (role !== "watch") return;
+        var live2 = sync.live;
+        if (!live2 || !live2.running || !live2.endAt) return;
+        remaining = Math.max(0, Math.ceil((live2.endAt - Date.now()) / 1000));
+        paintClock();
+      }, 250);
+    } else {
+      running = false;
+      remaining = typeof live.remaining === "number" ? live.remaining : remaining;
+      if (ticker) { window.clearInterval(ticker); ticker = null; }
+    }
+    paintGoals();
+    paintClock();
+  }
+
+  document.getElementById("takeover").addEventListener("click", function () {
+    if (!current) return;
+    role = "ref";
+    view.dataset.role = "ref";
+    stop();
+    pushLive({
+      matchId: current.id, hg: draft.home, ag: draft.away,
+      running: false, remaining: remaining, total: total
+    });
+    paintClock();
+  });
+
+  function closeMatch() {
+    stop();
+    document.getElementById("ftSheet").hidden = true;
+    view.hidden = true;
+    current = null;
+  }
+
+  function paintGoals() {
+    document.getElementById("goalsHome").textContent = draft.home;
+    document.getElementById("goalsAway").textContent = draft.away;
+  }
+
+  function paintClock() {
+    var mins = Math.floor(remaining / 60);
+    var secs = remaining % 60;
+    timeEl.textContent = mins + ":" + (secs < 10 ? "0" : "") + secs;
+
+    var fraction = total > 0 ? remaining / total : 0;
+    barEl.style.strokeDashoffset = CIRC * (1 - fraction);
+
+    clockEl.classList.toggle("final", remaining <= 60);
+    stateEl.textContent = remaining === 0 ? "Full time" : (running ? "Playing" : "Paused");
+    startBtn.textContent = running ? "Pause" : "Start";
+    startBtn.disabled = remaining === 0;
+  }
+
+  function start() {
+    if (remaining === 0) return;
+    endAt = Date.now() + remaining * 1000;
+    running = true;
+    blown = false;
+    ticker = window.setInterval(tick, 200);
+    armWhistle(remaining);          // hand the whistle to the audio clock
+    requestWakeLock();
+    paintClock();
+    if (role === "ref" && current) {
+      pushLive({ matchId: current.id, hg: draft.home, ag: draft.away,
+                 running: true, endAt: endAt, remaining: remaining, total: total });
+    }
+  }
+
+  function stop() {
+    running = false;
+    endAt = null;
+    if (ticker) { window.clearInterval(ticker); ticker = null; }
+    disarmWhistle();
+    releaseWakeLock();
+    if (role === "ref" && current) {
+      pushLive({ matchId: current.id, hg: draft.home, ag: draft.away,
+                 running: false, remaining: remaining, total: total });
+    }
+  }
+
+  function tick() {
+    if (!running || endAt === null) return;
+    remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+    if (remaining === 0 && !blown) {
+      blown = true;
+      whistle();        // before stop(), so it knows the audio clock already sounded
+      stop();
+      showFullTime();
+    }
+    paintClock();
+  }
+
+  startBtn.addEventListener("click", function () {
+    if (running) { stop(); paintClock(); } else { start(); }
+  });
+
+  document.getElementById("resetClock").addEventListener("click", function () {
+    if ((running || remaining < total) &&
+        !window.confirm("Put the clock back to " + Math.floor(total / 60) + ":00?")) return;
+    stop();
+    remaining = total;
+    blown = false;
+    paintClock();
+  });
+
+  document.getElementById("backBtn").addEventListener("click", function () {
+    if (running && role === "ref" &&
+        !window.confirm("The clock is still running. Leave this match?")) return;
+    closeMatch();
+  });
+
+  [].slice.call(document.querySelectorAll(".pm button")).forEach(function (b) {
+    b.addEventListener("click", function () {
+      var side = b.dataset.side;
+      var delta = parseInt(b.dataset.delta, 10);
+      draft[side] = Math.max(0, draft[side] + delta);
+      if (delta > 0 && navigator.vibrate) navigator.vibrate(18);   // short, unlike full time
+      paintGoals();
+      if (role === "ref" && current) {
+        pushLive({ matchId: current.id, hg: draft.home, ag: draft.away,
+                   running: running, endAt: endAt, remaining: remaining, total: total });
+      }
+    });
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", saveResult);
+
+  /* ---- full-time alert ---- */
+
+  var ftSheet = document.getElementById("ftSheet");
+  var nextSheet = document.getElementById("nextSheet");
+
+  function showFullTime() {
+    if (!current) return;
+    document.getElementById("ftLede").textContent =
+      "Match " + current.id + " · Round " + Math.ceil(current.id / 4);
+    document.getElementById("ftNameHome").textContent = tname(current.home);
+    document.getElementById("ftNameAway").textContent = tname(current.away);
+    document.getElementById("ftSwHome").style.background = tcolor(current.home);
+    document.getElementById("ftSwAway").style.background = tcolor(current.away);
+    document.getElementById("ftGoalsHome").textContent = draft.home;
+    document.getElementById("ftGoalsAway").textContent = draft.away;
+
+    var home = document.getElementById("ftHome");
+    var away = document.getElementById("ftAway");
+    home.classList.toggle("lost", draft.home < draft.away);
+    away.classList.toggle("lost", draft.away < draft.home);
+
+    var title = document.getElementById("ftTitle");
+    if (draft.home === draft.away) title.textContent = "Full time · draw";
+    else title.textContent = tname(draft.home > draft.away ? current.home : current.away) + " win";
+
+    ftSheet.hidden = false;
+  }
+
+  document.getElementById("ftPlayOn").addEventListener("click", function () {
+    ftSheet.hidden = true;
+  });
+  document.getElementById("ftSave").addEventListener("click", function () {
+    ftSheet.hidden = true;
+    saveResult();
+  });
+
+  /* ---- save, then offer the next match ---- */
+
+  function saveResult() {
+    if (!current || role !== "ref") return;
+    current.hg = draft.home;
+    current.ag = draft.away;
+    current.played = true;
+    save();
+
+    var justPlayed = current;
+    if (role === "ref") pushLive(null);
+    closeMatch();
+    renderAll();
+    offerNext(justPlayed);
+  }
+
+  function offerNext(justPlayed) {
+    var next = null;
+    for (var i = 0; i < state.matches.length; i++) {
+      if (!state.matches[i].played) { next = state.matches[i]; break; }
+    }
+
+    document.getElementById("nextTitle").textContent = next ? "Result saved" : "League complete";
+    document.getElementById("nextLede").textContent = next
+      ? ("Up next · match " + next.id + " of " + state.matches.length + " · " + state.minutes + " min")
+      : ("All " + state.matches.length + " matches played — " + tname(justPlayed.home) + " " + justPlayed.hg +
+         "–" + justPlayed.ag + " " + tname(justPlayed.away) + " was the last one.");
+
+    var fixture = document.getElementById("nextFixture");
+    var startBtnEl = document.getElementById("nxStart");
+    var chooseBtn = document.getElementById("nxChoose");
+
+    if (next) {
+      fixture.hidden = false;
+      document.getElementById("nxNameHome").textContent = tname(next.home);
+      document.getElementById("nxNameAway").textContent = tname(next.away);
+      document.getElementById("nxSwHome").style.background = tcolor(next.home);
+      document.getElementById("nxSwAway").style.background = tcolor(next.away);
+      startBtnEl.hidden = false;
+      startBtnEl.textContent = "Start " + tname(next.home) + " vs " + tname(next.away);
+      chooseBtn.textContent = "Pick a different match";
+    } else {
+      fixture.hidden = true;
+      startBtnEl.hidden = true;
+      chooseBtn.textContent = "See the final table";
+    }
+
+    nextSheet.hidden = false;
+
+    startBtnEl.onclick = function () {
+      nextSheet.hidden = true;
+      openMatch(next.id);
+    };
+    chooseBtn.onclick = function () {
+      nextSheet.hidden = true;
+      showTab(next ? "fixtures" : "table");
+    };
+  }
+
+  /* tapping the dimmed area dismisses either sheet */
+  [ftSheet, nextSheet].forEach(function (sheet) {
+    sheet.addEventListener("click", function (e) {
+      if (e.target === sheet) sheet.hidden = true;
+    });
+  });
+
+  /* ------------ the whistle ------------
+     The whistle is handed to the audio clock the moment the match starts,
+     not fired by a JavaScript timer. The audio thread keeps running when
+     you switch to another app, so the sound still lands on time — a
+     near-silent looping tone holds the audio session open to make that
+     stick. If the browser won't cooperate, we fall back to sounding it
+     when you come back to the app. */
+
+  var audio = { ctx: null, hold: null, queued: [], armed: false };
+
+  function audioCtx() {
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      if (!audio.ctx) audio.ctx = new Ctx();
+      if (audio.ctx.state === "suspended") audio.ctx.resume();
+      return audio.ctx;
+    } catch (e) { return null; }
+  }
+
+  /* an all-but-silent loop, so iOS keeps the audio session alive in the background */
+  function holdSession(ctx) {
+    if (audio.hold) return;
+    var buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 2), ctx.sampleRate);
+    var src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    var gain = ctx.createGain();
+    gain.gain.value = 0.0001;
+    src.connect(gain).connect(ctx.destination);
+    src.start();
+    audio.hold = src;
+  }
+
+  function releaseSession() {
+    if (audio.hold) {
+      try { audio.hold.stop(); } catch (e) { /* already stopped */ }
+      audio.hold = null;
+    }
+  }
+
+  /* two rising blasts, placed at an absolute moment on the audio clock */
+  function sound(ctx, at) {
+    [0, 0.26].forEach(function (offset, i) {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      var t = at + offset;
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(i === 0 ? 1320 : 1760, t);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.4, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.24);
+      audio.queued.push(osc);
+    });
+  }
+
+  /* A long, unmistakable full-time buzz. Android honours this; iOS Safari
+     has no vibration API at all, so there the whistle carries the alert. */
+  function buzz() {
+    if (!navigator.vibrate) return;
+    try { navigator.vibrate([400, 140, 400, 140, 600]); } catch (e) { /* blocked */ }
+  }
+
+  function armWhistle(seconds) {
+    var ctx = audioCtx();
+    audio.armed = false;
+    if (!ctx) return;
+    holdSession(ctx);
+    sound(ctx, ctx.currentTime + seconds);
+    audio.armed = true;
+  }
+
+  function disarmWhistle() {
+    audio.queued.forEach(function (n) {
+      try { n.stop(); } catch (e) { /* already finished */ }
+    });
+    audio.queued = [];
+    audio.armed = false;
+    releaseSession();
+  }
+
+  /* called when the clock reaches zero in the foreground */
+  function whistle() {
+    buzz();
+    if (audio.armed) { audio.armed = false; return; }   // already sounded on the audio clock
+    var ctx = audioCtx();
+    if (ctx) sound(ctx, ctx.currentTime);
+  }
+
+  function requestWakeLock() {
+    if (!navigator.wakeLock || wakeLock) return;
+    navigator.wakeLock.request("screen").then(function (lock) {
+      wakeLock = lock;
+      lock.addEventListener("release", function () { wakeLock = null; });
+    }).catch(function () { /* not available — screen may dim */ });
+  }
+
+  function releaseWakeLock() {
+    if (wakeLock) { wakeLock.release().catch(function () {}); wakeLock = null; }
+  }
+
+  /* keep the clock honest after the phone sleeps or the tab is backgrounded */
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden || !running) return;
+    audioCtx();          // iOS may suspend the context while you're away
+    tick();              // catch up: this fires the alert if full time passed
+    requestWakeLock();
+  });
+
+  /* ------------ live sharing ------------
+     One Firebase Realtime Database node per league code holds the fixtures,
+     results and whichever match is being refereed right now. Everything still
+     works with no connection: the phone keeps its own copy and catches up
+     when it can. */
+
+  var sync = {
+    on: false,       // connected and syncing
+    db: null,
+    mod: null,
+    code: "",
+    me: "",
+    applying: false, // suppresses the echo while we write a remote change in
+    lastDoc: "",
+    live: null       // the match someone is refereeing, as broadcast
+  };
+
+  function localGet(k, fallback) {
+    try { return localStorage.getItem(k) || fallback; } catch (e) { return fallback; }
+  }
+  function localSet(k, v) {
+    try { localStorage.setItem(k, v); } catch (e) { /* ignore */ }
+  }
+
+  function deviceId() {
+    var id = localGet("league.device", "");
+    if (!id) {
+      id = "d" + Math.random().toString(36).slice(2, 10);
+      localSet("league.device", id);
+    }
+    return id;
+  }
+
+  function setStatus(kind, text) {
+    ["liveDot", "statusDot"].forEach(function (id) {
+      var dot = document.getElementById(id);
+      dot.classList.toggle("on", kind === "on");
+      dot.classList.toggle("err", kind === "err");
+    });
+    document.getElementById("statusText").textContent = text;
+  }
+
+  function startSync() {
+    var cfg = window.LEAGUE_FIREBASE;
+    sync.code = localGet("league.code", "").toUpperCase();
+    document.getElementById("codeInput").value = sync.code;
+
+    if (!cfg || !cfg.databaseURL || cfg.databaseURL.indexOf("YOUR_") === 0) {
+      setStatus("off", "Off — no Firebase settings on this build");
+      return;
+    }
+    if (!sync.code) {
+      setStatus("off", "Off — enter a league code to share");
+      return;
+    }
+
+    setStatus("off", "Connecting…");
+    sync.me = deviceId();
+
+    var V = "https://www.gstatic.com/firebasejs/10.12.2/";
+    Promise.all([import(V + "firebase-app.js"), import(V + "firebase-database.js")])
+      .then(function (mods) {
+        var app = mods[0].initializeApp(cfg);
+        var db = mods[1].getDatabase(app);
+        sync.mod = mods[1];
+        sync.db = db;
+        sync.on = true;
+
+        var base = "leagues/" + sync.code;
+        sync.mod.onValue(sync.mod.ref(db, base + "/doc"), onRemoteDoc);
+        sync.mod.onValue(sync.mod.ref(db, base + "/live"), onRemoteLive);
+        sync.mod.onValue(sync.mod.ref(db, ".info/connected"), function (snap) {
+          setStatus(snap.val() ? "on" : "err",
+                    snap.val() ? ("Live · code " + sync.code) : "Offline — will catch up");
+        });
+      })
+      .catch(function () {
+        setStatus("err", "Couldn't reach Firebase — running on this phone only");
+      });
+  }
+
+  function pushDoc() {
+    if (!sync.on || sync.applying) return;
+    var doc = { teams: state.teams, matches: state.matches, minutes: state.minutes,
+                format: state.format, at: Date.now() };
+    var json = JSON.stringify({ teams: doc.teams, matches: doc.matches,
+                                minutes: doc.minutes, format: doc.format });
+    if (json === sync.lastDoc) return;
+    sync.lastDoc = json;
+    sync.mod.set(sync.mod.ref(sync.db, "leagues/" + sync.code + "/doc"), doc).catch(function () {});
+  }
+
+  function onRemoteDoc(snap) {
+    var doc = snap.val();
+    if (!doc) { sync.lastDoc = ""; pushDoc(); return; }   // first phone seeds the league
+
+    var json = JSON.stringify({ teams: doc.teams, matches: doc.matches,
+                                minutes: doc.minutes, format: doc.format });
+    if (json === JSON.stringify({ teams: state.teams, matches: state.matches,
+                                  minutes: state.minutes, format: state.format })) return;
+
+    sync.applying = true;
+    sync.lastDoc = json;
+    if (doc.teams) state.teams = doc.teams;
+    if (doc.matches) state.matches = doc.matches;
+    if (doc.minutes) state.minutes = doc.minutes;
+    if (doc.format) state.format = doc.format;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+    sync.applying = false;
+
+    renderAll();
+  }
+
+  function pushLive(payload) {
+    if (!sync.on) return;
+    var path = "leagues/" + sync.code + "/live";
+    if (payload === null) {
+      sync.mod.set(sync.mod.ref(sync.db, path), null).catch(function () {});
+    } else {
+      payload.refId = sync.me;
+      payload.at = Date.now();
+      sync.mod.set(sync.mod.ref(sync.db, path), payload).catch(function () {});
+    }
+  }
+
+  function onRemoteLive(snap) {
+    sync.live = snap.val();
+    renderFixtures();
+
+    // watching someone else's match: follow their clock and score
+    if (current && role === "watch") {
+      if (!sync.live || sync.live.matchId !== current.id) { closeMatch(); return; }
+      applyWatched();
+    }
+  }
+
+  function someoneElseRefereeing() {
+    return sync.live && sync.live.refId !== sync.me;
+  }
+
+  /* seconds left on the match someone else is refereeing */
+  function liveRemaining() {
+    var live = sync.live;
+    if (!live) return 0;
+    if (live.running && live.endAt) return Math.max(0, Math.ceil((live.endAt - Date.now()) / 1000));
+    return Math.max(0, live.remaining || 0);
+  }
+
+  function liveRemainingText() {
+    var left = liveRemaining();
+    return left === 0 ? "Full time" : (Math.floor(left / 60) + ":" + (left % 60 < 10 ? "0" : "") + (left % 60));
+  }
+
+  /* keep the banner clock ticking without redrawing the whole list */
+  window.setInterval(function () {
+    var span = document.getElementById("liveClock");
+    if (!span || !someoneElseRefereeing()) return;
+    span.textContent = liveRemainingText();
+  }, 500);
+
+  function startSyncSoon() { window.setTimeout(startSync, 0); }
+
+  document.getElementById("codeJoin").addEventListener("click", function () {
+    var code = document.getElementById("codeInput").value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
+    localSet("league.code", code);
+    window.location.reload();
+  });
+
+  /* ------------ first run ------------
+     Setup comes first: session length, team names and the league code. The
+     Setup tab keeps all of it editable afterwards. */
+
+  function suggestCode() {
+    var letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    var digits = "23456789";
+    var out = "SAT-";
+    for (var i = 0; i < 2; i++) out += letters[Math.floor(Math.random() * letters.length)];
+    for (var j = 0; j < 2; j++) out += digits[Math.floor(Math.random() * digits.length)];
+    return out;
+  }
+
+  function renderOnboard() {
+    var pick = document.getElementById("obFormat");
+    pick.textContent = "";
+    Object.keys(FORMATS).forEach(function (key) {
+      var fmt = FORMATS[key];
+      var b = el("button");
+      b.setAttribute("aria-pressed", String(state.format === key));
+      var t = el("span", "t");
+      t.textContent = fmt.label;
+      var sub = el("span", "s");
+      sub.textContent = fmt.sub;
+      b.appendChild(t);
+      b.appendChild(sub);
+      b.addEventListener("click", function () {
+        state.format = key;
+        state.matches = blankMatches(key);
+        renderOnboard();
+      });
+      pick.appendChild(b);
+    });
+
+    var host = document.getElementById("obTeams");
+    host.textContent = "";
+    state.teams.forEach(function (t) {
+      var field = el("div", "field");
+      var input = el("input");
+      input.type = "text";
+      input.value = t.name;
+      input.setAttribute("aria-label", "Name for team " + t.id);
+      input.style.color = readable(t.color);
+      input.addEventListener("input", function () {
+        t.name = input.value.trim() === "" ? "Team " + t.id : input.value;
+      });
+
+      var dots = el("div", "dots");
+      PALETTE.forEach(function (hex) {
+        var d = el("button", "dot");
+        d.style.background = hex;
+        d.setAttribute("aria-pressed", String(t.color === hex));
+        d.setAttribute("aria-label", "Use this colour");
+        d.addEventListener("click", function () {
+          t.color = hex;
+          renderOnboard();
+        });
+        dots.appendChild(d);
+      });
+
+      field.appendChild(input);
+      field.appendChild(dots);
+      host.appendChild(field);
+    });
+
+    document.getElementById("obLenVal").textContent = state.minutes + " min";
+
+    var played = state.matches.length;
+    var total = played * state.minutes;
+    document.getElementById("obLenNote").textContent =
+      played + " matches x " + state.minutes + " min is " +
+      Math.floor(total / 60) + "h " + (total % 60) + "m of football, before changeovers.";
+
+    var code = document.getElementById("obCode");
+    if (!code.value) code.value = localGet("league.code", "") || suggestCode();
+  }
+
+  document.getElementById("obLenUp").addEventListener("click", function () {
+    state.minutes = Math.min(45, state.minutes + 1);
+    renderOnboard();
+  });
+  document.getElementById("obLenDown").addEventListener("click", function () {
+    state.minutes = Math.max(1, state.minutes - 1);
+    renderOnboard();
+  });
+
+  document.getElementById("obDice").addEventListener("click", function () {
+    document.getElementById("obCode").value = suggestCode();
+  });
+
+  document.getElementById("obStart").addEventListener("click", function () {
+    var code = document.getElementById("obCode").value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
+    localSet("league.code", code);
+    localSet("league.ready", "1");
+    save();
+    document.getElementById("onboard").hidden = true;
+    renderAll();
+    startSync();
+  });
+
+  function needsOnboarding() { return localGet("league.ready", "") !== "1"; }
+
+  function renderAll() {
+    renderProgress();
+    renderFixtures();
+    renderTable();
+    renderSetup();
+  }
+
+  renderAll();
+  if (needsOnboarding()) {
+    renderOnboard();
+    document.getElementById("onboard").hidden = false;
+  } else {
+    startSyncSoon();
+  }
+})();
+</script>

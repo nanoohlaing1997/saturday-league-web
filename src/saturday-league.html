@@ -375,7 +375,7 @@
     font-family: var(--display);
     font-size: 15px;
     font-weight: 600;
-    letter-spacing: .12em;
+    letter-spacing: .08em;
     text-transform: uppercase;
     color: var(--ink-soft);
     position: relative;
@@ -658,6 +658,23 @@
   }
   .empty .btn { margin-top: 8px; min-width: 190px; }
 
+  .guide { padding: 4px 16px 14px; }
+  .guide ol, .guide ul { margin: 0; padding-left: 20px; }
+  .guide li {
+    margin: 12px 0;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+  .guide li b { color: var(--ink); font-weight: 600; }
+  .guide p {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin: 14px 0;
+  }
+  .guide ol li::marker { font-family: var(--display); font-weight: 700; color: var(--ink); }
+
   .code-row { display: flex; gap: 8px; align-items: center; }
   .code-row input {
     flex: 1;
@@ -807,6 +824,45 @@
       <p class="note">Three points for a win, one for a draw. Ranked by points, then goal difference, then goals scored.</p>
     </section>
 
+    <section class="panel" id="panel-guide" hidden>
+      <div class="eyebrow">Getting started</div>
+      <div class="card guide">
+        <ol>
+          <li><b>Set it up.</b> In Setup choose the session length, name the four teams and pick their colours, set the minutes per match, then tap <b>Create the match list</b>.</li>
+          <li><b>Share the code.</b> Tap <b>Copy code to share</b> and paste it into the group chat. Everyone opens the same link, goes to Setup, types the code and taps <b>Join</b>.</li>
+          <li><b>Play.</b> Open a match from Fixtures, tap <b>Start</b>, and tap <b>+</b> as the goals go in.</li>
+        </ol>
+      </div>
+
+      <div class="eyebrow">Running a match</div>
+      <div class="card guide">
+        <ul>
+          <li>Whoever taps <b>Start</b> becomes the <b>referee</b> and owns the clock and the goal buttons.</li>
+          <li>Only one match runs at a time. Other matches cannot start until this one is saved.</li>
+          <li>Everyone else sees a <b>Live now</b> banner with the score and a ticking clock. Tap it to watch.</li>
+          <li>If the referee's phone dies, anyone can open that match and tap <b>Take over as referee</b>. The old referee drops to watching.</li>
+          <li>Leaving a match you are refereeing releases the clock, so someone else can start.</li>
+          <li>At full time it whistles, buzzes, and shows the score with <b>Save result</b>, then offers the next match.</li>
+        </ul>
+      </div>
+
+      <div class="eyebrow">Good to know</div>
+      <div class="card guide">
+        <ul>
+          <li><b>Keep the ringer on</b> — the whistle is the alert. iPhones cannot vibrate from a web app.</li>
+          <li>The screen stays awake while the clock runs. Switch apps and the whistle still sounds on time.</li>
+          <li><b>Add to Home Screen</b> from the share menu for an app icon and full screen.</li>
+          <li>It works with no signal. Each phone keeps its own copy and catches up when it reconnects.</li>
+          <li><b>Clear all results</b> zeroes the scores and keeps the fixtures. <b>Delete the match list</b> removes everything and returns to Setup — for everyone, if you share a code.</li>
+        </ul>
+      </div>
+
+      <div class="eyebrow">The table</div>
+      <div class="card guide">
+        <p>Three points for a win, one for a draw. Teams are ranked by points, then goal difference, then goals scored.</p>
+      </div>
+    </section>
+
     <section class="panel" id="panel-setup" hidden>
       <div class="eyebrow">Session</div>
       <div class="card">
@@ -873,6 +929,7 @@
       <button class="tab" role="tab" aria-selected="true" data-panel="fixtures">Fixtures</button>
       <button class="tab" role="tab" aria-selected="false" data-panel="table">Table</button>
       <button class="tab" role="tab" aria-selected="false" data-panel="setup">Setup</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="guide">Guide</button>
     </div>
   </nav>
 </div>
@@ -1126,9 +1183,13 @@
     document.getElementById("rounds").hidden = !exists;
     if (!exists) return;
 
+    var liveId = sync.live ? sync.live.matchId : null;
     var next = null;
     for (var i = 0; i < state.matches.length; i++) {
-      if (!state.matches[i].played) { next = state.matches[i]; break; }
+      if (!state.matches[i].played && state.matches[i].id !== liveId) {
+        next = state.matches[i];
+        break;
+      }
     }
 
     var host = document.getElementById("upnext");
@@ -1466,6 +1527,7 @@
 
   var current = null;      // match on screen
   var role = "ref";        // "ref" = this phone runs the clock, "watch" = following
+  var closing = false;     // true while leaving a match, so we do not rebroadcast it
   var total = 0;           // seconds in a match
   var remaining = 0;
   var endAt = null;
@@ -1547,7 +1609,12 @@
     if (!current) return;
     role = "ref";
     view.dataset.role = "ref";
+    document.getElementById("startPause").disabled = remaining === 0;
+    document.getElementById("hint").textContent =
+      "You have the clock now. The screen stays on while it runs.";
+    closing = true;
     stop();
+    closing = false;
     pushLive({
       matchId: current.id, hg: draft.home, ag: draft.away,
       running: false, remaining: remaining, total: total
@@ -1556,7 +1623,11 @@
   });
 
   function closeMatch() {
+    var wasRef = role === "ref" && current && sync.live && sync.live.matchId === current.id;
+    closing = true;                 // stop() must not re-announce a match we are leaving
     stop();
+    closing = false;
+    if (wasRef) pushLive(null);     // hand the clock back to the league
     document.getElementById("ftSheet").hidden = true;
     view.hidden = true;
     current = null;
@@ -1617,7 +1688,7 @@
     if (ticker) { window.clearInterval(ticker); ticker = null; }
     disarmWhistle();
     releaseWakeLock();
-    if (role === "ref" && current) {
+    if (!closing && role === "ref" && current) {
       pushLive({ matchId: current.id, hg: draft.home, ag: draft.away,
                  running: false, remaining: remaining, total: total });
     }
@@ -1723,9 +1794,13 @@
   }
 
   function offerNext(justPlayed) {
+    var liveId = sync.live ? sync.live.matchId : null;
     var next = null;
     for (var i = 0; i < state.matches.length; i++) {
-      if (!state.matches[i].played) { next = state.matches[i]; break; }
+      if (!state.matches[i].played && state.matches[i].id !== liveId) {
+        next = state.matches[i];
+        break;
+      }
     }
 
     document.getElementById("nextTitle").textContent = next ? "Result saved" : "League complete";
@@ -2015,6 +2090,18 @@
   function onRemoteLive(snap) {
     sync.live = snap.val();
     renderFixtures();
+
+    if (current && role === "ref" && sync.live &&
+        sync.live.matchId === current.id && sync.live.refId !== sync.me) {
+      // someone took this match over — stand down and follow their clock
+      closing = true;
+      stop();
+      closing = false;
+      role = "watch";
+      view.dataset.role = "watch";
+      applyWatched();
+      return;
+    }
 
     if (current && role === "ref") {
       var blocked = someoneElseRefereeing() && sync.live.matchId !== current.id;

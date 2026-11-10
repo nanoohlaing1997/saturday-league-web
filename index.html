@@ -648,6 +648,31 @@
   }
   .segmented .s { font-size: 11.5px; opacity: .7; }
 
+  .empty {
+    text-align: center;
+    padding: 46px 22px;
+    display: grid;
+    gap: 10px;
+    justify-items: center;
+  }
+  .empty[hidden] { display: none; }
+  .empty h2 {
+    font-family: var(--display);
+    font-size: 30px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    margin: 0;
+  }
+  .empty p {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin: 0;
+    max-width: 34ch;
+    line-height: 1.5;
+  }
+  .empty .btn { margin-top: 8px; min-width: 190px; }
+
   .code-row { display: flex; gap: 8px; align-items: center; }
   .code-row input {
     flex: 1;
@@ -769,13 +794,22 @@
 
   <main>
     <section class="panel" id="panel-fixtures">
+      <div class="empty" id="noLeague" hidden>
+        <h2>No matches yet</h2>
+        <p>Set the session length, name the teams, then create the match list. It takes a few seconds.</p>
+        <button class="btn solid" id="goSetup">Go to Setup</button>
+      </div>
       <div id="upnext"></div>
       <div id="rounds"></div>
     </section>
 
     <section class="panel" id="panel-table" hidden>
-      <div class="eyebrow">Standings</div>
-      <div class="card">
+      <div class="empty" id="noTable" hidden>
+        <h2>No table yet</h2>
+        <p>The table fills in as results are saved.</p>
+      </div>
+      <div class="eyebrow" id="tableHead">Standings</div>
+      <div class="card" id="tableCard">
         <table>
           <thead>
             <tr>
@@ -806,6 +840,7 @@
           <div class="code-row">
             <input id="codeInput" type="text" placeholder="LEAGUE CODE" autocapitalize="characters"
                    autocorrect="off" spellcheck="false" aria-label="League code">
+            <button class="pill" id="codeNew" style="width:auto;padding:0 12px" aria-label="Suggest a code">New</button>
             <button class="pill" id="codeJoin" style="width:auto;padding:0 14px" aria-label="Join">Join</button>
           </div>
           <button class="btn" id="codeShare" style="width:100%;margin-top:10px">Copy code to share</button>
@@ -828,11 +863,19 @@
         </div>
       </div>
 
+      <div id="createWrap" hidden>
+        <div class="eyebrow">Ready?</div>
+        <button class="btn solid" id="createBtn" style="width:100%">Create the match list</button>
+        <p class="note" id="createNote"></p>
+      </div>
+
+      <div id="resetWrap">
       <div class="eyebrow">Reset</div>
       <div class="card">
         <button class="danger" id="resetBtn">Clear all results</button>
       </div>
       <p class="note" id="resetNote"></p>
+      </div>
     </section>
   </main>
 
@@ -843,56 +886,6 @@
       <button class="tab" role="tab" aria-selected="false" data-panel="setup">Setup</button>
     </div>
   </nav>
-</div>
-
-<div class="match" id="onboard" hidden>
-  <div class="match-inner">
-    <div class="onboard-head">
-      <h2>Saturday League</h2>
-      <p>Four teams, 7-minute games. Set it up once — you can change any of it later in Setup.</p>
-    </div>
-
-    <div class="eyebrow">How long is the session?</div>
-    <div class="segmented" id="obFormat"></div>
-
-    <div class="eyebrow">Team names</div>
-    <div class="card" id="obTeams"></div>
-
-    <div class="eyebrow">How long is each match?</div>
-    <div class="card">
-      <div class="field">
-        <div class="stepline">
-          <span class="cap">Minutes</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <button class="pill" id="obLenDown" aria-label="Shorter">−</button>
-            <span class="val" id="obLenVal"></span>
-            <button class="pill" id="obLenUp" aria-label="Longer">+</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <p class="hint" id="obLenNote" style="text-align:left;margin:11px 4px 0"></p>
-
-    <div class="eyebrow">League code</div>
-    <div class="card">
-      <div class="field">
-        <div class="code-row">
-          <input id="obCode" type="text" placeholder="LEAGUE CODE" autocapitalize="characters"
-                 autocorrect="off" spellcheck="false" aria-label="League code">
-          <button class="pill" id="obDice" style="width:auto;padding:0 14px" aria-label="Suggest a code">New</button>
-        </div>
-        <button class="btn" id="obShare" style="width:100%;margin-top:10px">Copy code to share</button>
-        <p class="hint" style="text-align:left;margin:11px 2px 0">
-          Share this code so everyone follows the same league and sees live scores.
-          Clear it to keep everything on this phone only.
-        </p>
-      </div>
-    </div>
-
-    <div class="save">
-      <button class="btn solid" id="obStart" style="width:100%">Create league</button>
-    </div>
-  </div>
 </div>
 
 <div class="match" id="matchView" hidden>
@@ -1128,12 +1121,22 @@
   /* ------------ fixtures ------------ */
 
   function renderProgress() {
+    if (!leagueExists()) {
+      document.getElementById("progress").textContent = "Not set up";
+      return;
+    }
     var played = state.matches.filter(function (m) { return m.played; }).length;
     document.getElementById("progress").textContent =
       played + " / " + state.matches.length + " played";
   }
 
   function renderFixtures() {
+    var exists = leagueExists();
+    document.getElementById("noLeague").hidden = exists;
+    document.getElementById("upnext").hidden = !exists;
+    document.getElementById("rounds").hidden = !exists;
+    if (!exists) return;
+
     var next = null;
     for (var i = 0; i < state.matches.length; i++) {
       if (!state.matches[i].played) { next = state.matches[i]; break; }
@@ -1260,6 +1263,12 @@
   /* ------------ table ------------ */
 
   function renderTable() {
+    var exists = leagueExists();
+    document.getElementById("noTable").hidden = exists;
+    document.getElementById("tableHead").hidden = !exists;
+    document.getElementById("tableCard").hidden = !exists;
+    if (!exists) return;
+
     var rows = {};
     state.teams.forEach(function (t) {
       rows[t.id] = { t: t, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0 };
@@ -1393,6 +1402,20 @@
     });
 
     document.getElementById("lenVal").textContent = state.minutes + " min";
+
+    var exists = leagueExists();
+    document.getElementById("createWrap").hidden = exists;
+    document.getElementById("resetWrap").hidden = !exists;
+
+    var span = state.matches.length * state.minutes;
+    document.getElementById("createNote").textContent =
+      state.matches.length + " matches of " + state.minutes + " min is " +
+      Math.floor(span / 60) + "h " + (span % 60) + "m of football, before changeovers. " +
+      "You can change any of this afterwards.";
+
+    var codeField = document.getElementById("codeInput");
+    if (!exists && !codeField.value) codeField.value = localGet("league.code", "") || suggestCode();
+
 
     var played = state.matches.filter(function (m) { return m.played; }).length;
     document.getElementById("resetBtn").textContent =
@@ -1971,6 +1994,7 @@
 
     sync.applying = true;
     sync.lastDoc = json;
+    markCreated();
     if (doc.teams) state.teams = doc.teams;
     if (doc.matches) state.matches = doc.matches;
     if (doc.minutes) state.minutes = doc.minutes;
@@ -2035,48 +2059,27 @@
 
   function startSyncSoon() { window.setTimeout(startSync, 0); }
 
+  document.getElementById("goSetup").addEventListener("click", function () { showTab("setup"); });
+
+  document.getElementById("codeNew").addEventListener("click", function () {
+    document.getElementById("codeInput").value = suggestCode();
+  });
+
+  document.getElementById("createBtn").addEventListener("click", function () {
+    var code = document.getElementById("codeInput").value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
+    localSet("league.code", code);
+    markCreated();
+    state.matches = blankMatches(state.format);
+    save();
+    renderAll();
+    showTab("fixtures");
+    startSync();
+  });
+
   document.getElementById("codeJoin").addEventListener("click", function () {
     var code = document.getElementById("codeInput").value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
     localSet("league.code", code);
     window.location.reload();
-  });
-
-  /* ------------ first run ------------
-     Setup comes first: session length, team names and the league code. The
-     Setup tab keeps all of it editable afterwards. */
-
-  /* Clipboard needs a secure context; over plain http on the LAN it is absent,
-     so fall back to the old selection trick. */
-  function copyText(text, button) {
-    function done(ok) {
-      var original = button.textContent;
-      button.textContent = ok ? "Copied — paste it to the group" : "Press and hold the code to copy";
-      window.setTimeout(function () { button.textContent = original; }, 2200);
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
-      return;
-    }
-    try {
-      var temp = document.createElement("textarea");
-      temp.value = text;
-      document.body.appendChild(temp);
-      temp.select();
-      done(document.execCommand("copy"));
-      document.body.removeChild(temp);
-    } catch (e) { done(false); }
-  }
-
-  document.getElementById("codeShare").addEventListener("click", function () {
-    var code = document.getElementById("codeInput").value.trim().toUpperCase();
-    if (!code) return;
-    copyText(code, this);
-  });
-
-  document.getElementById("obShare").addEventListener("click", function () {
-    var code = document.getElementById("obCode").value.trim().toUpperCase();
-    if (!code) return;
-    copyText(code, this);
   });
 
   function suggestCode() {
@@ -2088,94 +2091,10 @@
     return out;
   }
 
-  function renderOnboard() {
-    var pick = document.getElementById("obFormat");
-    pick.textContent = "";
-    Object.keys(FORMATS).forEach(function (key) {
-      var fmt = FORMATS[key];
-      var b = el("button");
-      b.setAttribute("aria-pressed", String(state.format === key));
-      var t = el("span", "t");
-      t.textContent = fmt.label;
-      var sub = el("span", "s");
-      sub.textContent = fmt.sub;
-      b.appendChild(t);
-      b.appendChild(sub);
-      b.addEventListener("click", function () {
-        state.format = key;
-        state.matches = blankMatches(key);
-        renderOnboard();
-      });
-      pick.appendChild(b);
-    });
+  /* Nothing exists until the match list is created in Setup. */
+  function leagueExists() { return localGet("league.ready", "") === "1"; }
 
-    var host = document.getElementById("obTeams");
-    host.textContent = "";
-    state.teams.forEach(function (t) {
-      var field = el("div", "field");
-      var input = el("input");
-      input.type = "text";
-      input.value = t.name;
-      input.setAttribute("aria-label", "Name for team " + t.id);
-      input.style.color = readable(t.color);
-      input.addEventListener("input", function () {
-        t.name = input.value.trim() === "" ? "Team " + t.id : input.value;
-      });
-
-      var dots = el("div", "dots");
-      PALETTE.forEach(function (hex) {
-        var d = el("button", "dot");
-        d.style.background = hex;
-        d.setAttribute("aria-pressed", String(t.color === hex));
-        d.setAttribute("aria-label", "Use this colour");
-        d.addEventListener("click", function () {
-          t.color = hex;
-          renderOnboard();
-        });
-        dots.appendChild(d);
-      });
-
-      field.appendChild(input);
-      field.appendChild(dots);
-      host.appendChild(field);
-    });
-
-    document.getElementById("obLenVal").textContent = state.minutes + " min";
-
-    var played = state.matches.length;
-    var total = played * state.minutes;
-    document.getElementById("obLenNote").textContent =
-      played + " matches x " + state.minutes + " min is " +
-      Math.floor(total / 60) + "h " + (total % 60) + "m of football, before changeovers.";
-
-    var code = document.getElementById("obCode");
-    if (!code.value) code.value = localGet("league.code", "") || suggestCode();
-  }
-
-  document.getElementById("obLenUp").addEventListener("click", function () {
-    state.minutes = Math.min(45, state.minutes + 1);
-    renderOnboard();
-  });
-  document.getElementById("obLenDown").addEventListener("click", function () {
-    state.minutes = Math.max(1, state.minutes - 1);
-    renderOnboard();
-  });
-
-  document.getElementById("obDice").addEventListener("click", function () {
-    document.getElementById("obCode").value = suggestCode();
-  });
-
-  document.getElementById("obStart").addEventListener("click", function () {
-    var code = document.getElementById("obCode").value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
-    localSet("league.code", code);
-    localSet("league.ready", "1");
-    save();
-    document.getElementById("onboard").hidden = true;
-    renderAll();
-    startSync();
-  });
-
-  function needsOnboarding() { return localGet("league.ready", "") !== "1"; }
+  function markCreated() { localSet("league.ready", "1"); }
 
   function renderAll() {
     renderProgress();
@@ -2185,11 +2104,10 @@
   }
 
   renderAll();
-  if (needsOnboarding()) {
-    renderOnboard();
-    document.getElementById("onboard").hidden = false;
-  } else {
+  if (leagueExists()) {
     startSyncSoon();
+  } else {
+    showTab("setup");          // step one: build the match list
   }
 })();
 </script>

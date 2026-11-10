@@ -859,7 +859,11 @@
       <div class="card">
         <button class="danger" id="resetBtn">Clear all results</button>
       </div>
+      <div class="card" style="margin-top:10px">
+        <button class="danger" id="deleteBtn">Delete the match list</button>
+      </div>
       <p class="note" id="resetNote"></p>
+      <p class="note" id="deleteNote"></p>
       </div>
     </section>
   </main>
@@ -1406,6 +1410,10 @@
     document.getElementById("resetBtn").textContent =
       played === 0 ? "Nothing to clear" : ("Clear " + played + " result" + (played === 1 ? "" : "s"));
     document.getElementById("resetBtn").disabled = played === 0;
+    document.getElementById("deleteNote").textContent = sync.on
+      ? "Deleting removes the fixtures and results for everyone on code " + sync.code +
+        ", and takes you back to Setup. Team names, colours and the code are kept."
+      : "Deleting removes the fixtures and results and takes you back to Setup. Team names, colours and the code are kept.";
     document.getElementById("resetNote").textContent = played === 0
       ? "No results recorded yet. Team names, colours and match length are kept when you clear."
       : (played + " of " + state.matches.length + " matches played. Clearing keeps team names, colours and match length.");
@@ -1889,6 +1897,7 @@
     code: "",
     me: "",
     applying: false, // suppresses the echo while we write a remote change in
+    deleted: false,  // set once this phone deletes the league, until it makes a new one
     lastDoc: "",
     live: null       // the match someone is refereeing, as broadcast
   };
@@ -1958,7 +1967,7 @@
   }
 
   function pushDoc() {
-    if (!sync.on || sync.applying) return;
+    if (!sync.on || sync.applying || sync.deleted) return;
     var doc = { teams: state.teams, matches: state.matches, minutes: state.minutes,
                 format: state.format, at: Date.now() };
     var json = JSON.stringify({ teams: doc.teams, matches: doc.matches,
@@ -1969,6 +1978,7 @@
   }
 
   function onRemoteDoc(snap) {
+    if (sync.deleted) return;
     var doc = snap.val();
     if (!doc) { sync.lastDoc = ""; pushDoc(); return; }   // first phone seeds the league
 
@@ -2054,11 +2064,34 @@
     var code = document.getElementById("codeInput").value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
     localSet("league.code", code);
     markCreated();
+    sync.deleted = false;
     state.matches = blankMatches(state.format);
     save();
     renderAll();
     showTab("fixtures");
     startSync();
+  });
+
+  document.getElementById("deleteBtn").addEventListener("click", function () {
+    var shared = sync.on;
+    if (!window.confirm(shared
+          ? "Delete the match list for everyone on code " + sync.code +
+            "? All fixtures and results go, and every phone returns to Setup."
+          : "Delete the match list? All fixtures and results go and you return to Setup.")) return;
+
+    if (shared) {
+      sync.deleted = true;                       // stop this phone reseeding what it just removed
+      sync.mod.set(sync.mod.ref(sync.db, "leagues/" + sync.code), null).catch(function () {});
+      sync.on = false;
+      setStatus("off", "Off — create a match list to share again");
+    }
+
+    try { localStorage.removeItem("league.ready"); } catch (e) { /* ignore */ }
+    state.matches = blankMatches(state.format);
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+
+    renderAll();
+    showTab("setup");
   });
 
   document.getElementById("codeJoin").addEventListener("click", function () {

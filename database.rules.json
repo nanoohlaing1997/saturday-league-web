@@ -4,7 +4,12 @@
       "$code": {
         ".read": true,
         ".write": true,
-        ".validate": "$code.length >= 4"
+        ".validate": "$code.length >= 4",
+        "push": {
+          "$device": {
+            ".validate": "newData.hasChildren(['token', 'at'])"
+          }
+        }
       }
     }
   }

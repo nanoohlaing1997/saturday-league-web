@@ -1,4 +1,4 @@
-var CACHE = "saturday-league-v34";
+var CACHE = "saturday-league-v35";
 var SHELL = [
   "./",
   "./index.html",
@@ -63,6 +63,36 @@ self.addEventListener("fetch", function (event) {
         });
         return response;
       });
+    })
+  );
+});
+
+/* Full time, pushed from the server. The referee's phone books the moment the
+ * clock starts, so this arrives even with every phone locked. */
+self.addEventListener("push", function (event) {
+  var data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { /* not ours */ }
+  var payload = data.data || data;        // FCM nests a data-only message
+
+  event.waitUntil(self.registration.showNotification(payload.title || "Full time", {
+    body: payload.body || "The match has finished.",
+    icon: "./icon-192.png",
+    badge: "./icon-192.png",
+    tag: "full-time-" + (payload.matchId || ""),   // one notification per match, not a pile
+    renotify: true,
+    vibrate: [120, 60, 120, 60, 240],
+    data: payload
+  }));
+});
+
+self.addEventListener("notificationclick", function (event) {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (windows) {
+      for (var i = 0; i < windows.length; i++) {
+        if (windows[i].url.indexOf(self.registration.scope) === 0) return windows[i].focus();
+      }
+      return self.clients.openWindow("./index.html");
     })
   );
 });
